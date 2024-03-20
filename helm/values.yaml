@@ -1,4 +1,4 @@
-storage: influx
+storage: postgres
 # Only required if storage is postgres
 postgres_storage:
   database: &metricsdatabase pgwatch2_metrics
@@ -9,23 +9,23 @@ metrics_preset:
   metrics: '{"kpi": 120, "wal": 60, "locks": 60, "db_size": 300, "archiver": 60, "backends": 60, "bgwriter": 60, "cpu_load": 60, "db_stats": 60, "settings": 7200, "wal_size": 300, "locks_mode": 60, "index_stats": 900, "replication": 120, "sproc_stats": 180, "table_stats": 300, "wal_receiver": 120, "change_events": 300, "table_io_stats": 600, "sequence_health": 3600, "replication_slots": 120}'
 
 databases:
-  - host: pgwatch2-postgresql
-    grafana_preset_metrics: remotedba
-    port: 5432
-    user: pgwatch2
-    password: "pgwatch2"
-    dbs:
-      - postgres
-      - foo
-      - bar
-  - host: pgwatch2-postgresql-hl
-    grafana_preset_metrics: remotedba
-    port: 5432
-    user: pgwatch2
-    password: "pgwatch2"
-    dbs:
-      - postgres
-      - pgwatch2
+- host: pgwatch2-postgresql
+  grafana_preset_metrics: remotedba
+  port: 5432
+  user: pgwatch2
+  password: 'pgwatch2'
+  dbs:
+    - postgres
+    - foo
+    - bar
+- host: pgwatch2-postgresql-hl
+  grafana_preset_metrics: remotedba
+  port: 5432
+  user: pgwatch2
+  password: 'pgwatch2'
+  dbs:
+    - postgres
+    - pgwatch2
 
 daemon:
   enabled: true
@@ -37,15 +37,15 @@ daemon:
     PW2_PG_RETENTION_DAYS: "14"
     PW2_MIN_DB_SIZE_MB: "0"
 
-  extraVolumes: {}
-  extraVolumeMounts: {}
-
 bootstrap:
   image:
     repository: cybertec/pgwatch2-db-bootstrapper
     tag: latest
 
 postgresql:
+  enabled: true
+  auth:
+    postgresPassword: pgwatch2
   user: &postgresuser pgwatch2
   password: &postgrespassword pgwatch2
   primary:
@@ -53,9 +53,29 @@ postgresql:
       # This value file assumes that we are installing the helm chart with the name "pgwatch2"
       # replace pgwatch2 with the name you are installing the chart.
       scriptsConfigMap: pgwatch2-initdb
+  secretname: pgwatch2-postgresql-credentials
+  secretkey: PATRONI_SUPERUSER_PASSWORD
+
+timescaledb-single:
+  fullnameOverride: pgwatch2-postgresql
+  replicaCount: 3 # default value
+  persistentVolumes:
+    data:
+      enabled: true
+      size: 50Gi
+    wal:
+      enabled: true
+      size: 5Gi
+  postInit:
+    - configMap:
+        name: pgwatch2-initdb
+        optional: false
+  secrets:
+    credentials:
+      PATRONI_pgwatch2_PASSWORD: &postgrespassword
 
 influxdb:
-  enabled: true
+  enabled: false
   service:
     type: ClusterIP
 
@@ -75,8 +95,7 @@ webui:
     # See https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress
     # ingressClassName: nginx
     # Values can be templated
-    annotations:
-      {}
+    annotations: {}
       # kubernetes.io/ingress.class: nginx
       # kubernetes.io/tls-acme: "true"
     labels: {}
@@ -102,10 +121,12 @@ webui:
     #       port:
     #         name: use-annotation
 
+
     tls: []
     #  - secretName: chart-example-tls
     #    hosts:
     #      - chart-example.local
+
 
 grafana:
   sidecar:
@@ -173,43 +194,22 @@ grafana:
     datasources.yaml:
       apiVersion: 1
       datasources:
-        - name: InfluxDB_v1
-          type: influxdb
-          access: proxy
-          url: http://pgwatch2-influxdb:8086
-          isDefault: true
-          database: pgwatch2
-          user: pgwatch2
-          jsonData:
-            httpMode: GET
-          secureJsonData:
-            password: pgwatch2
-      ## Postgresql
-      # - name: Postgres
-      #   type: postgres
-      #   url: pgwatch2-postgresql:5432
-      #   isDefault: true
-      #   user: *postgresuser
-      #   secureJsonData:
-      #     password: *postgrespassword
-      #   jsonData:
-      #     database: *metricsdatabase
-      #     sslmode: 'disable' # disable/require/verify-ca/verify-full
-      #     maxOpenConns: 0 # Grafana v5.4+
-      #     maxIdleConns: 2 # Grafana v5.4+
-      #     connMaxLifetime: 14400 # Grafana v5.4+
-      #     postgresVersion: 1200 # 903=9.3, 904=9.4, 905=9.5, 906=9.6, 1000=10
-      #     timescaledb: false
+      - name: Postgres
+        type: postgres
+        url: pgwatch2-postgresql:5432
+        isDefault: true
+        user: *postgresuser
+        secureJsonData:
+          password: *postgrespassword
+        jsonData:
+          database: *metricsdatabase
+          sslmode: 'require' # disable/require/verify-ca/verify-full
+          maxOpenConns: 0 # Grafana v5.4+
+          maxIdleConns: 2 # Grafana v5.4+
+          connMaxLifetime: 14400 # Grafana v5.4+
+          postgresVersion: 1400 # 903=9.3, 904=9.4, 905=9.5, 906=9.6, 1000=10
+          timescaledb: true
 
   image:
     repository: grafana/grafana
-    tag: latest
-
-metallb:
-  enabled: true
-  configInline:
-    address-pools:
-      - name: default
-        protocol: layer2
-        addresses:
-          - 192.168.49.10-192.168.49.250
+    tag: 8.5.16
