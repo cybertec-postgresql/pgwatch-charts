@@ -132,7 +132,7 @@ grafana:
   sidecar:
     dashboards:
       enabled: true
-  enabled: True
+  enabled: false
   service:
     type: ClusterIP
   noAnonymous: false
@@ -213,3 +213,4 @@ grafana:
   image:
     repository: grafana/grafana
     tag: 8.5.16
+

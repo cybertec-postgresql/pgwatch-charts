@@ -1,3 +1,4 @@
+{{ if .Values.grafana.enabled }}
 {{ range $path, $_ :=  .Files.Glob  (printf "grafana_dashboards/%s/v%s/**.json" (include "pgwatch2-storage" .) (substr 0 1 .Subcharts.grafana.Chart.AppVersion)) }}
 ---
 apiVersion: v1
@@ -10,3 +11,5 @@ data:
   {{ regexReplaceAll ".*/" ($path | replace "/dashboard.json" ".json") "" }}: |{{ printf "\n" }}
         {{- $.Files.Get $path | indent 4}}
 {{ end }}
+{{ end }}
+
