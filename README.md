@@ -1,6 +1,6 @@
-# pgwatch2-charts
+# pgwatch-charts
 
-Chart templates for cybertec-postgresql/pgwatch2 
+Chart templates for cybertec-postgresql/pgwatch 
 
 ## Disclaimer
 
