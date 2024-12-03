@@ -9,12 +9,12 @@ pgwatch:
       disk:
         size: '10Gi'
         storageClass: 'crc-csi-hostpath-provisioner'
-    use_existing_database:
-      endpoint: postgresql.local
-      port:     5432
-      database: PGWATCH_DATABASE
-      sslmode:  disable
-      username: pgwatch_user
-      password: PASSWORD_FOR_PGWATCH_USER
+    # use_existing_database:
+    #   endpoint: postgresql.local
+    #   port:     '5432'
+    #   database: PGWATCH_DATABASE
+    #   sslmode:  disable
+    #   username: pgwatch_user
+    #   password: PASSWORD_FOR_PGWATCH_USER
 
     

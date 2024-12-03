@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: postgres
-        image: {{ .Values.pgwatch.postgres.image }}
+        image: {{ .Values.pgwatch.postgres.new_metric_database.image }}
         ports:
         - containerPort: 5432
           name: postgres
