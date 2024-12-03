@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    application: pgwatch
+  name: pgwatch-svc
+spec:
+  ports:
+    - name: pgwatch
+      port: 8080
+      targetPort: 8080
+  selector:
+    application: pgwatch
+    pgwatch.pods.role: pgwatch
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    application: pgwatch
+  name: grafana-svc
+spec:
+  ports:
+    - name: grafana
+      port: 3000
+      targetPort: 3000
+  selector:
+    application: pgwatch
+    pgwatch.pods.role: grafana
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    application: pgwatch
+  name: postgres-svc
+spec:
+  ports:
+    - name: postgresql
+      port: 5432
+      targetPort: 5432
+  selector:
+    application: pgwatch
+    pgwatch.pods.role: postgres

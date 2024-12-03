@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    application: pgwatch
+    pgwatch.pods.role: pgwatch
+  name: pgwatch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      application: pgwatch
+      pgwatch.pods.role: pgwatch
+  template:
+    metadata:
+      labels:
+        application: pgwatch
+        pgwatch.pods.role: pgwatch
+    spec:
+      containers:
+        - env: 
+          - name: PGWATCH_USER
+            valueFrom:
+              secretKeyRef:
+                name: pgwatch-postgresql-secret-pgwatch
+                key: username
+          - name: PGWATCH_USER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: pgwatch-postgresql-secret-pgwatch
+                key: password
+          image: {{ .Values.pgwatch.image }}
+          name: pgwatch
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          command: ["/bin/sh", "-c"] 
+          args:
+            - |
+              export PW_SINK=postgresql://$PGWATCH_USER:$PGWATCH_USER_PASSWORD@postgres-svc.pgwatch.svc.cluster.local:5432/pgwatch_metrics?sslmode=disable
+              export PW_SOURCES=postgresql://$PGWATCH_USER:$PGWATCH_USER_PASSWORD@postgres-svc.pgwatch.svc.cluster.local:5432/pgwatch?sslmode=disable
+              exec /pgwatch/pgwatch
+      restartPolicy: Always
+

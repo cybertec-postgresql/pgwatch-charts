@@ -1,0 +1,118 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    application: pgwatch
+    pgwatch.pods.role: grafana
+  name: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      application: pgwatch
+      pgwatch.pods.role: grafana
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        application: pgwatch
+        pgwatch.pods.role: grafana
+    spec:
+      containers:
+        - env:
+            - name: GF_AUTH_ANONYMOUS_ENABLED
+              value: "true"
+            - name: GF_AUTH_ANONYMOUS_ORG_ROLE
+              value: Admin
+            - name: GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH
+              value: /var/lib/grafana/dashboards/1-global-db-overview.json
+            - name: GF_DATABASE_HOST
+              value: postgres-svc:5432
+            - name: GF_DATABASE_NAME
+              value: pgwatch_grafana
+            - name: GF_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pgwatch-postgresql-secret-pgwatch
+                  key: password
+            - name: GF_DATABASE_SSL_MODE
+              value: disable
+            - name: GF_DATABASE_TYPE
+              value: postgres
+            - name: GF_DATABASE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: pgwatch-postgresql-secret-pgwatch
+                  key: username
+            - name: GF_INSTALL_PLUGINS
+              value: marcusolsson-treemap-panel
+          image: grafana/grafana:10.4.7
+          name: grafana
+          ports:
+            - containerPort: 3000
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /etc/grafana/provisioning/datasources/pg_ds.yml
+              name: grafana-datasources
+              subPath: pg_ds.yml
+            - mountPath: /etc/grafana/provisioning/dashboards/pg_db.yml
+              name: grafana-config
+              subPath: pg_db.yml
+            - mountPath: /var/lib/grafana/dashboards
+              name: grafana-dashboards
+      restartPolicy: Always
+      volumes:
+        - configMap:
+            items:
+              - key: postgres_datasource.yml
+                path: pg_ds.yml
+            name: grafana-datasources
+          name: grafana-datasources
+        - configMap:
+            items:
+              - key: postgres_dashboard.yml
+                path: pg_db.yml
+            name: grafana-config
+          name: grafana-config
+        - name: grafana-dashboards
+          projected:
+            sources:
+              - configMap:
+                  name: grafana-dashboards-basics
+                  optional: true
+              - configMap:
+                  name: grafana-dashboards-others
+                  optional: true
+            defaultMode: 416       
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  annotations:
+    use-subpath: "true"
+  labels:
+    application: pgwatch
+  name: grafana-datasources
+data:
+  postgres_datasource.yml: "apiVersion: 1\n\ndatasources:\n- name: pg-metrics\n  type: postgres\n  url: postgres-svc:5432\n  access: proxy\n  password: pgwatchadmin\n  user: pgwatch\n  database: pgwatch_metrics\n  basicAuth: false\n  isDefault: true\n  jsonData:\n     sslmode: disable\n     postgresVersion: 1700 \n  version: 1\n  editable: true\n"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    application: pgwatch
+  name: grafana-config
+data:
+  postgres_dashboard.yml: |
+    apiVersion: 1
+
+    providers:
+    - name: 'default'
+      orgId: 1
+      folder: ''
+      type: file
+      disableDeletion: false
+      updateIntervalSeconds: 10 #how often Grafana will scan for changed dashboards
+      options:
+        path: /var/lib/grafana/dashboards

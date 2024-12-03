@@ -1,0 +1,8 @@
+pgwatch:
+  image: "docker.io/cybertecpostgresql/pgwatch:latest"
+  postgres:
+    # image: "docker.io/bitnami/postgresql:latest"
+    image: "docker.io/schmaetz/postgres:bookworm-17-1"
+    disk:
+      size: '10Gi'
+      storageClass: 'crc-csi-hostpath-provisioner'
