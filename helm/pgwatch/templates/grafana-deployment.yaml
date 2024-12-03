@@ -5,6 +5,7 @@ metadata:
     application: pgwatch
     pgwatch.pods.role: grafana
   name: grafana
+  namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
   selector:
@@ -27,26 +28,39 @@ spec:
               value: Admin
             - name: GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH
               value: /var/lib/grafana/dashboards/1-global-db-overview.json
+            - name: GF_DATABASE_TYPE
+              value: postgres
+            - name: GF_INSTALL_PLUGINS
+              value: marcusolsson-treemap-panel
+          {{- if eq .Values.pgwatch.postgres.create_metric_database "true" }} 
             - name: GF_DATABASE_HOST
               value: postgres-svc:5432
             - name: GF_DATABASE_NAME
               value: pgwatch_grafana
-            - name: GF_DATABASE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: pgwatch-postgresql-secret-pgwatch
-                  key: password
             - name: GF_DATABASE_SSL_MODE
               value: disable
-            - name: GF_DATABASE_TYPE
-              value: postgres
             - name: GF_DATABASE_USER
               valueFrom:
                 secretKeyRef:
                   name: pgwatch-postgresql-secret-pgwatch
                   key: username
-            - name: GF_INSTALL_PLUGINS
-              value: marcusolsson-treemap-panel
+            - name: GF_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pgwatch-postgresql-secret-pgwatch
+                  key: password
+          {{- else }}
+            - name: GF_DATABASE_HOST
+              value: {{ .Values.pgwatch.postgres.use_existing_database.endpoint }}
+            - name: GF_DATABASE_NAME
+              value: {{ .Values.pgwatch.postgres.use_existing_database.database }}
+            - name: GF_DATABASE_SSL_MODE
+              value: {{ .Values.pgwatch.postgres.use_existing_database.sslmode }}
+            - name: GF_DATABASE_USER
+              value: {{ .Values.pgwatch.postgres.use_existing_database.username }}
+            - name: GF_DATABASE_PASSWORD
+              value: {{ .Values.pgwatch.postgres.use_existing_database.password }}
+          {{ end }}
           image: grafana/grafana:10.4.7
           name: grafana
           ports:
@@ -94,6 +108,7 @@ metadata:
   labels:
     application: pgwatch
   name: grafana-datasources
+  namespace: {{ .Release.Namespace }}
 data:
   postgres_datasource.yml: "apiVersion: 1\n\ndatasources:\n- name: pg-metrics\n  type: postgres\n  url: postgres-svc:5432\n  access: proxy\n  password: pgwatchadmin\n  user: pgwatch\n  database: pgwatch_metrics\n  basicAuth: false\n  isDefault: true\n  jsonData:\n     sslmode: disable\n     postgresVersion: 1700 \n  version: 1\n  editable: true\n"
 ---
@@ -103,6 +118,7 @@ metadata:
   labels:
     application: pgwatch
   name: grafana-config
+  namespace: {{ .Release.Namespace }}
 data:
   postgres_dashboard.yml: |
     apiVersion: 1

@@ -1,8 +1,20 @@
 pgwatch:
   image: "docker.io/cybertecpostgresql/pgwatch:latest"
+  namespace: pgwatch
   postgres:
-    # image: "docker.io/bitnami/postgresql:latest"
-    image: "docker.io/schmaetz/postgres:bookworm-17-1"
-    disk:
-      size: '10Gi'
-      storageClass: 'crc-csi-hostpath-provisioner'
+    # define is a database for the metrics needs to be created or if there is already an existing database
+    create_metric_database: "true" #"false"
+    new_metric_database:
+      image: "docker.io/schmaetz/postgres:bookworm-17-1"
+      disk:
+        size: '10Gi'
+        storageClass: 'crc-csi-hostpath-provisioner'
+    use_existing_database:
+      endpoint: postgresql.local
+      port:     5432
+      database: PGWATCH_DATABASE
+      sslmode:  disable
+      username: pgwatch_user
+      password: PASSWORD_FOR_PGWATCH_USER
+
+    

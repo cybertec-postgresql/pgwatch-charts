@@ -4,6 +4,7 @@ metadata:
   labels:
     application: pgwatch
   name: grafana-dashboards-others
+  namespace: {{ .Values.pgwatch.namespace }}
 data:
   1-global-db-overview.json: |-
     {

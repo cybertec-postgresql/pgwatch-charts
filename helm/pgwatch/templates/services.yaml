@@ -4,6 +4,7 @@ metadata:
   labels:
     application: pgwatch
   name: pgwatch-svc
+  namespace: {{ .Release.Namespace }}
 spec:
   ports:
     - name: pgwatch
@@ -19,6 +20,7 @@ metadata:
   labels:
     application: pgwatch
   name: grafana-svc
+  namespace: {{ .Release.Namespace }}
 spec:
   ports:
     - name: grafana
@@ -28,12 +30,14 @@ spec:
     application: pgwatch
     pgwatch.pods.role: grafana
 ---
+{{- if eq .Values.pgwatch.postgres.create_metric_database "true" }}
 apiVersion: v1
 kind: Service
 metadata:
   labels:
     application: pgwatch
   name: postgres-svc
+  namespace: {{ .Release.Namespace }}
 spec:
   ports:
     - name: postgresql
@@ -42,3 +46,4 @@ spec:
   selector:
     application: pgwatch
     pgwatch.pods.role: postgres
+{{ end }}

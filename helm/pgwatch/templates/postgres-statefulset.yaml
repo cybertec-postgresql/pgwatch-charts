@@ -1,8 +1,9 @@
-
+{{- if eq .Values.pgwatch.postgres.create_metric_database "true" }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: postgres
+  namespace: {{ .Release.Namespace }}
 spec:
   serviceName: "postgres-svc"
   replicas: 1
@@ -73,7 +74,8 @@ spec:
         pgwatch.pods.role: postgres
     spec:
       accessModes: [ "ReadWriteOnce" ]
-      storageClassName: {{ .Values.pgwatch.postgres.disk.storageClass }}
+      storageClassName: {{ .Values.pgwatch.postgres.new_metric_database.disk.storageClass }}
       resources:
         requests:
-          storage: {{ .Values.pgwatch.postgres.disk.size }}
+          storage: {{ .Values.pgwatch.postgres.new_metric_database.disk.size }}
+{{ end }}

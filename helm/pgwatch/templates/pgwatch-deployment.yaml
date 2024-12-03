@@ -5,6 +5,7 @@ metadata:
     application: pgwatch
     pgwatch.pods.role: pgwatch
   name: pgwatch
+  namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
   selector:
@@ -18,7 +19,8 @@ spec:
         pgwatch.pods.role: pgwatch
     spec:
       containers:
-        - env: 
+        - env:
+        {{- if eq .Values.pgwatch.postgres.create_metric_database "true" }} 
           - name: PGWATCH_USER
             valueFrom:
               secretKeyRef:
@@ -29,6 +31,28 @@ spec:
               secretKeyRef:
                 name: pgwatch-postgresql-secret-pgwatch
                 key: password
+          - name: METRIC_DATABASE_ENDPOINT
+            value: "postgres-svc.{{ .Release.Namespace }}.svc.cluster.local"
+          - name: METRIC_DATABASE_PORT
+            value: "5432"
+          - name: METRIC_DATABASE_DATABASE
+            value: pgwatch_metrics
+          - name: METRIC_DATABASE_SSLMODE
+            value: disable
+        {{- else }}
+          - name: PGWATCH_USER
+            value: {{ .Values.pgwatch.postgres.use_existing_database.username }}
+          - name: PGWATCH_USER_PASSWORD
+            value: {{ .Values.pgwatch.postgres.use_existing_database.password }}
+          - name: METRIC_DATABASE_ENDPOINT
+            value: {{ .Values.pgwatch.postgres.use_existing_database.endpoint }}
+          - name: METRIC_DATABASE_PORT
+            value: "{{ .Values.pgwatch.postgres.use_existing_database.port }}"
+          - name: METRIC_DATABASE_DATABASE
+            value: {{ .Values.pgwatch.postgres.use_existing_database.database }}
+          - name: METRIC_DATABASE_SSLMODE
+            value: {{ .Values.pgwatch.postgres.use_existing_database.sslmode }}
+        {{ end }}
           image: {{ .Values.pgwatch.image }}
           name: pgwatch
           ports:
@@ -37,8 +61,8 @@ spec:
           command: ["/bin/sh", "-c"] 
           args:
             - |
-              export PW_SINK=postgresql://$PGWATCH_USER:$PGWATCH_USER_PASSWORD@postgres-svc.pgwatch.svc.cluster.local:5432/pgwatch_metrics?sslmode=disable
-              export PW_SOURCES=postgresql://$PGWATCH_USER:$PGWATCH_USER_PASSWORD@postgres-svc.pgwatch.svc.cluster.local:5432/pgwatch?sslmode=disable
+              export PW_SINK=postgresql://$PGWATCH_USER:$PGWATCH_USER_PASSWORD@$METRIC_DATABASE_ENDPOINT:$METRIC_DATABASE_PORT/$METRIC_DATABASE_DATABASE?sslmode=$METRIC_DATABASE_SSLMODE
+              export PW_SOURCES=postgresql://$PGWATCH_USER:$PGWATCH_USER_PASSWORD@$METRIC_DATABASE_ENDPOINT:$METRIC_DATABASE_PORT/$METRIC_DATABASE_DATABASE?sslmode=$METRIC_DATABASE_SSLMODE
               exec /pgwatch/pgwatch
       restartPolicy: Always
 
