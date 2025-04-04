@@ -74,8 +74,8 @@ spec:
         pgwatch.pods.role: postgres
     spec:
       accessModes: [ "ReadWriteOnce" ]
-      storageClassName: {{ .Values.pgwatch.postgres.new_metric_database.disk.storageClass }}
+      storageClassName: {{ .Values.pgwatch.postgres.new_metric_database.volume.storageClass }}
       resources:
         requests:
-          storage: {{ .Values.pgwatch.postgres.new_metric_database.disk.size }}
+          storage: {{ .Values.pgwatch.postgres.new_metric_database.volume.size }}
 {{ end }}

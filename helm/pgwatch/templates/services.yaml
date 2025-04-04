@@ -10,6 +10,11 @@ spec:
     - name: pgwatch
       port: 8080
       targetPort: 8080
+{{- if eq .Values.pgwatch.prometheus.new_prometheus.create_prometheus "true" }}
+    - name: pgwatch-prometheus-sink
+      port: 9188
+      targetPort: 9188    
+{{ end }}
   selector:
     application: pgwatch
     pgwatch.pods.role: pgwatch
@@ -46,4 +51,20 @@ spec:
   selector:
     application: pgwatch
     pgwatch.pods.role: postgres
+{{ end }}
+---
+{{- if eq .Values.pgwatch.prometheus.new_prometheus.create_prometheus "true" }}
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    application: pgwatch
+  name: pgwatch-prometheus-svc
+spec:
+  type: ClusterIP
+  ports:
+  - name: prometheus
+    port: 9090
+  selector:
+    name: pgwatch-prometheus
 {{ end }}

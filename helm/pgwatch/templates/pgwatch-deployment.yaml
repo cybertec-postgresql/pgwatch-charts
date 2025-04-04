@@ -58,11 +58,16 @@ spec:
           ports:
             - containerPort: 8080
               protocol: TCP
+        {{- if eq .Values.pgwatch.prometheus.enable_prom_sink "true" }}
+            - containerPort: 9188
+              protocol: TCP
+        {{ end }}
           command: ["/bin/sh", "-c"] 
           args:
             - |
               export PW_SINK=postgresql://$PGWATCH_USER:$PGWATCH_USER_PASSWORD@$METRIC_DATABASE_ENDPOINT:$METRIC_DATABASE_PORT/$METRIC_DATABASE_DATABASE?sslmode=$METRIC_DATABASE_SSLMODE
               export PW_SOURCES=postgresql://$PGWATCH_USER:$PGWATCH_USER_PASSWORD@$METRIC_DATABASE_ENDPOINT:$METRIC_DATABASE_PORT/$METRIC_DATABASE_DATABASE?sslmode=$METRIC_DATABASE_SSLMODE
               exec /pgwatch/pgwatch
+              {{- if eq .Values.pgwatch.prometheus.enable_prom_sink "true" }} --sink=prometheus://0.0.0.0:9188/pgwatch {{- end }} \
       restartPolicy: Always
 

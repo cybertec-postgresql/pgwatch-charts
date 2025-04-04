@@ -6,7 +6,7 @@ pgwatch:
     create_metric_database: "true" #"false"
     new_metric_database:
       image: "docker.io/schmaetz/postgres:bookworm-17-1"
-      disk:
+      volume:
         size: '10Gi'
         storageClass: 'crc-csi-hostpath-provisioner'
     # use_existing_database:
@@ -16,5 +16,11 @@ pgwatch:
     #   sslmode:  disable
     #   username: pgwatch_user
     #   password: PASSWORD_FOR_PGWATCH_USER
-
-    
+  prometheus: 
+    enable_prom_sink: "true"
+    new_prometheus:
+      create_prometheus: "true"
+      image: "prom/prometheus:main"
+      volume:
+        size: '10Gi'
+        storageClass: 'crc-csi-hostpath-provisioner'
