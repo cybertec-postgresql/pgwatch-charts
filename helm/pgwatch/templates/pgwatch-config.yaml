@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/name: postgres-operator-monitoring
+    vendor: opensource.cybertec
+  name: pgwatch-cm
+data:
+  launcher.sh: |
+    #!/bin/sh
+
+    CMD="/pgwatch/pgwatch --sources=postgresql://$PGWATCH_USER:$PGWATCH_USER_PASSWORD@$METRIC_DATABASE_ENDPOINT:$METRIC_DATABASE_PORT/$METRIC_DATABASE_DATABASE?sslmode=$METRIC_DATABASE_SSLMODE"
+
+    if [[ "$PG_IS_SINK" == "true" ]]; then
+        CMD="$CMD --sink=postgresql://$PGWATCH_USER:$PGWATCH_USER_PASSWORD@$METRIC_DATABASE_ENDPOINT:$METRIC_DATABASE_PORT/$METRIC_DATABASE_DATABASE?sslmode=$METRIC_DATABASE_SSLMODE"
+    fi
+
+    if [[ "$PROM_IS_SINK" == "true" ]]; then
+        CMD="$CMD --sink=prometheus://0.0.0.0:9188/pgwatch"
+    fi
+
+    exec $CMD
+

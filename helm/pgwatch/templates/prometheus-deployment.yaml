@@ -65,10 +65,6 @@ spec:
       - name: prometheus-volume
         persistentVolumeClaim:
           claimName: prometheus-pvc
-      - configMap:
-          defaultMode: 420
-          name: alertmanager-rules-config
-        name: alertmanagerrules
   progressDeadlineSeconds: 600
   replicas: 1
   revisionHistoryLimit: 10

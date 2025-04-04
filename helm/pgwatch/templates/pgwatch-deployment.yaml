@@ -53,7 +53,19 @@ spec:
           - name: METRIC_DATABASE_SSLMODE
             value: {{ .Values.pgwatch.postgres.use_existing_database.sslmode }}
         {{ end }}
+        {{- if eq .Values.pgwatch.postgres.enable_pg_sink "true" }}
+          - name: PG_IS_SINK
+            value: "true"
+        {{ end }}
+        {{- if eq .Values.pgwatch.prometheus.enable_prom_sink "true" }}
+          - name: PROM_IS_SINK
+            value: "true"
+        {{ end }}
           image: {{ .Values.pgwatch.image }}
+          volumeMounts:
+          - name: launcher
+            mountPath: /tmp/launcher.sh
+            subPath: launcher.sh
           name: pgwatch
           ports:
             - containerPort: 8080
@@ -62,12 +74,11 @@ spec:
             - containerPort: 9188
               protocol: TCP
         {{ end }}
-          command: ["/bin/sh", "-c"] 
-          args:
-            - |
-              export PW_SINK=postgresql://$PGWATCH_USER:$PGWATCH_USER_PASSWORD@$METRIC_DATABASE_ENDPOINT:$METRIC_DATABASE_PORT/$METRIC_DATABASE_DATABASE?sslmode=$METRIC_DATABASE_SSLMODE
-              export PW_SOURCES=postgresql://$PGWATCH_USER:$PGWATCH_USER_PASSWORD@$METRIC_DATABASE_ENDPOINT:$METRIC_DATABASE_PORT/$METRIC_DATABASE_DATABASE?sslmode=$METRIC_DATABASE_SSLMODE
-              exec /pgwatch/pgwatch
-              {{- if eq .Values.pgwatch.prometheus.enable_prom_sink "true" }} --sink=prometheus://0.0.0.0:9188/pgwatch {{- end }} \
+          command: ["/tmp/launcher.sh"]
+      volumes:
+      - name: launcher
+        configMap:
+          name: pgwatch-cm
+          defaultMode: 0777  # Damit es direkt ausführbar ist
       restartPolicy: Always
 

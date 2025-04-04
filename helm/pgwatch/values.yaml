@@ -2,6 +2,7 @@ pgwatch:
   image: "docker.io/cybertecpostgresql/pgwatch:latest"
   namespace: pgwatch
   postgres:
+    enable_pg_sink: "true"
     # define is a database for the metrics needs to be created or if there is already an existing database
     create_metric_database: "true" #"false"
     new_metric_database:
