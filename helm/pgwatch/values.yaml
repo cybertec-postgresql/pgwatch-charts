@@ -3,6 +3,8 @@ pgwatch:
   namespace: pgwatch
   postgres:
     enable_pg_sink: "true"
+    settings: 
+      retention_days: 31
     # define is a database for the metrics needs to be created or if there is already an existing database
     create_metric_database: "true" #"false"
     new_metric_database:
@@ -22,6 +24,7 @@ pgwatch:
     new_prometheus:
       create_prometheus: "true"
       image: "prom/prometheus:main"
+      data_retention: 30d
       volume:
         size: '10Gi'
         storageClass: 'crc-csi-hostpath-provisioner'

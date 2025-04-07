@@ -56,6 +56,8 @@ spec:
         {{- if eq .Values.pgwatch.postgres.enable_pg_sink "true" }}
           - name: PG_IS_SINK
             value: "true"
+          - name: PG_RETENTION_DAYS
+            value: {{ .Values.pgwatch.postgres.settings.retention_days }} 
         {{ end }}
         {{- if eq .Values.pgwatch.prometheus.enable_prom_sink "true" }}
           - name: PROM_IS_SINK
