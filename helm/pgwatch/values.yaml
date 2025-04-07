@@ -22,7 +22,7 @@ pgwatch:
   prometheus: 
     enable_prom_sink: "true"
     new_prometheus:
-      create_prometheus: "true"
+      create_prometheus: "false"
       image: "prom/prometheus:main"
       settings:
         retention_days: 31
