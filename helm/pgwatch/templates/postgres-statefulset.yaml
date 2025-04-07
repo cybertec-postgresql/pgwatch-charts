@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: postgres
-        image: {{ .Values.pgwatch.postgres.new_metric_database.image }}
+        image: {{ .Values.pgwatch.postgres.new_pg_database.image }}
         ports:
         - containerPort: 5432
           name: postgres
@@ -74,8 +74,8 @@ spec:
         pgwatch.pods.role: postgres
     spec:
       accessModes: [ "ReadWriteOnce" ]
-      storageClassName: {{ .Values.pgwatch.postgres.new_metric_database.volume.storageClass }}
+      storageClassName: {{ .Values.pgwatch.postgres.new_pg_database.volume.storageClass }}
       resources:
         requests:
-          storage: {{ .Values.pgwatch.postgres.new_metric_database.volume.size }}
+          storage: {{ .Values.pgwatch.postgres.new_pg_database.volume.size }}
 {{ end }}

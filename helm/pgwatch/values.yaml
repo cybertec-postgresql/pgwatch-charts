@@ -7,12 +7,12 @@ pgwatch:
       retention_days: 31
     # define is a database for the metrics needs to be created or if there is already an existing database
     create_metric_database: "true" #"false"
-    new_metric_database:
+    new_pg_database: # Will be used for pgqwatch config only, if enable_pg_sink = "false"
       image: "docker.io/schmaetz/postgres:bookworm-17-1"
       volume:
         size: '10Gi'
         storageClass: 'crc-csi-hostpath-provisioner'
-    # use_existing_database:
+    # use_existing_database: # Will be used for pgqwatch config only, if enable_pg_sink = "false"
     #   endpoint: postgresql.local
     #   port:     '5432'
     #   database: PGWATCH_DATABASE
