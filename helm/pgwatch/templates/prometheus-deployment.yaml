@@ -47,6 +47,10 @@ spec:
           timeoutSeconds: 1
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
+        args:
+          - "--config.file=/etc/prometheus/prometheus.yml"
+          - "--storage.tsdb.path=/prometheus"
+          - "--storage.tsdb.retention.time={{ .Values.pgwatch.prometheus.new_prometheus.settings.retention_days }}d"
         volumeMounts:
         - mountPath: /etc/prometheus
           name: prometheus-cm
@@ -69,9 +73,5 @@ spec:
   replicas: 1
   revisionHistoryLimit: 10
   strategy:
-    rollingUpdate:
-      maxSurge: 25%
-      maxUnavailable: 25%
-    type: RollingUpdate
-
+    type: Recreate
 {{ end }}

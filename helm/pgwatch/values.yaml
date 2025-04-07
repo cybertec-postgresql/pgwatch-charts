@@ -24,7 +24,8 @@ pgwatch:
     new_prometheus:
       create_prometheus: "true"
       image: "prom/prometheus:main"
-      data_retention: 30d
+      settings:
+        retention_days: 31
       volume:
         size: '10Gi'
         storageClass: 'crc-csi-hostpath-provisioner'
