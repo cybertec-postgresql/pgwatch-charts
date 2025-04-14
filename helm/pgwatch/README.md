@@ -34,5 +34,9 @@ The Helm chart currently supports PostgreSQL and Prometheus as a sink. This can 
 - Prometheus
   - Use an existing Prometheus as Sink (enables Sink-Connect on Port 9188)
   - Create a new Prometheus-Instance in the same namespace
+- Grafana
+  - Deploy Grafana with the dashboards for PostgreSQL as a sink 
  
     
+## Limitation
+Please note that the Grafana dashboard was developed for use with PostgreSQL as a sink. If you decide to use Prometheus as a sink, you will need to build your own dashboards and configure Prometheus as a data source in Grafana yourself. If you want to use your own systems behind Prometheus, you can use Yaml to easily prevent Grafana from being deployed.
