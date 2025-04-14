@@ -29,3 +29,5 @@ pgwatch:
       volume:
         size: '10Gi'
         storageClass: 'crc-csi-hostpath-provisioner'
+  grafana:
+    enable_grafana: "true"
