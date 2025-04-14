@@ -1,3 +1,4 @@
+{{- if eq .Values.pgwatch.prometheus.new_prometheus.create_prometheus "true" }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -17,3 +18,4 @@ data:
     - job_name: 'pgwatch' 
       static_configs:
         - targets: ['pgwatch-svc.pgwatch.svc.cluster.local:9188'] 
+{{ end }}
