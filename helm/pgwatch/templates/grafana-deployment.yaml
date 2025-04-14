@@ -1,3 +1,4 @@
+{{- if eq .Values.pgwatch.grafana.enable_grafana "true" }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -132,3 +133,4 @@ data:
       updateIntervalSeconds: 10 #how often Grafana will scan for changed dashboards
       options:
         path: /var/lib/grafana/dashboards
+{{ end }}
