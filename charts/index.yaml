@@ -1,0 +1,13 @@
+apiVersion: v1
+entries:
+  pgwatch:
+  - apiVersion: v1
+    appVersion: "3.2"
+    created: "2025-04-15T16:21:29.294425244+02:00"
+    description: A Helm chart for pgwatch monitoring tools
+    digest: 69410525096ac64bac0f782205d92485e0d57cfc72f2e1d1684933baf3c21100
+    name: pgwatch
+    urls:
+    - https://cybertec-postgresql.github.io/pgwatch-charts/pgwatch-3.0.1.tgz
+    version: 3.0.1
+generated: "2025-04-15T16:21:29.288927563+02:00"
