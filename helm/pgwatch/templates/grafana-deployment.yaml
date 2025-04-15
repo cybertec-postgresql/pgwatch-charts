@@ -29,11 +29,11 @@ spec:
               value: Admin
             - name: GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH
               value: /var/lib/grafana/dashboards/1-global-db-overview.json
-            - name: GF_DATABASE_TYPE
-              value: postgres
-            - name: GF_INSTALL_PLUGINS
-              value: marcusolsson-treemap-panel
+          #  - name: GF_INSTALL_PLUGINS
+          #    value: marcusolsson-treemap-panel
           {{- if eq .Values.pgwatch.postgres.create_metric_database "true" }} 
+             - name: GF_DATABASE_TYPE
+              value: postgres
             - name: GF_DATABASE_HOST
               value: postgres-svc:5432
             - name: GF_DATABASE_NAME
@@ -51,6 +51,8 @@ spec:
                   name: pgwatch-postgresql-secret-pgwatch
                   key: password
           {{- else }}
+            - name: GF_DATABASE_TYPE
+              value: postgres
             - name: GF_DATABASE_HOST
               value: {{ .Values.pgwatch.postgres.use_existing_database.endpoint }}
             - name: GF_DATABASE_NAME
