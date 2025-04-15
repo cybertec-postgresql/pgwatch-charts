@@ -32,3 +32,6 @@ pgwatch:
         storageClass: 'crc-csi-hostpath-provisioner'
   grafana:
     enable_grafana: "true"
+    enable_datasources:
+      postgres: "true"
+      prometheus: "false"
