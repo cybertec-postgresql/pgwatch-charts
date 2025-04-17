@@ -15,7 +15,17 @@ To use the Helm-Charts, you can either patch the repo onto your local system or 
 In either case, please familiarise yourself with the relevant values files before use and create a custom variant to set up pgWatch according to your preferences in your environment. 
 
 ### Helm-Repository
-comming soon
+```sh
+# Add Helm-Repo
+helm repo add pgwatch https://cybertec-postgresql.github.io/pgwatch-charts
+helm repo update
+
+# Install helm-Chart
+helm install pgwatch pgwatch/pgwatch --values custom-values.yaml
+
+# Upgrade helm-Chart
+helm upgrade pgwatch pgwatch/pgwatch --values custom-values.yaml
+```
 
 ### git clone
 ```sh
@@ -23,8 +33,11 @@ git clone https://github.com/cybertec-postgresql/pgwatch-charts.git
 cd pgwatch-chart/helm/pgwatch
 
 
-// Install helm-Chart
+# Install helm-Chart
 helm install pgwatch -n pgwatch -f custom-values.yaml . 
+
+# Upgrade Helm-Chart
+helm upgrade pgwatch -n pgwatch -f custom-values.yaml . 
 
 ```
 
