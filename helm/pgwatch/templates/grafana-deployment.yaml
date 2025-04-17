@@ -31,8 +31,8 @@ spec:
               value: /var/lib/grafana/dashboards/1-global-db-overview.json
           #  - name: GF_INSTALL_PLUGINS
           #    value: marcusolsson-treemap-panel
-          {{- if eq .Values.pgwatch.postgres.create_metric_database "true" }} 
-             - name: GF_DATABASE_TYPE
+            {{- if eq .Values.pgwatch.postgres.create_metric_database "true" }} 
+            - name: GF_DATABASE_TYPE
               value: postgres
             - name: GF_DATABASE_HOST
               value: postgres-svc:5432
@@ -50,7 +50,7 @@ spec:
                 secretKeyRef:
                   name: pgwatch-postgresql-secret-pgwatch
                   key: password
-          {{- else }}
+            {{- else }}
             - name: GF_DATABASE_TYPE
               value: postgres
             - name: GF_DATABASE_HOST
@@ -63,7 +63,7 @@ spec:
               value: {{ .Values.pgwatch.postgres.use_existing_database.username }}
             - name: GF_DATABASE_PASSWORD
               value: {{ .Values.pgwatch.postgres.use_existing_database.password }}
-          {{ end }}
+            {{ end }}
           image: grafana/grafana:10.4.7
           name: grafana
           ports:
@@ -113,11 +113,42 @@ metadata:
   name: grafana-datasources
   namespace: {{ .Release.Namespace }}
 data:
-{{- if eq .Values.pgwatch.postgres.create_metric_database "true" }} 
-  postgres_datasource.yml: "apiVersion: 1\n\ndatasources:\n- name: pg-metrics\n  type: postgres\n  url: postgres-svc:5432\n  access: proxy\n  password: pgwatchadmin\n  user: pgwatch\n  database: pgwatch_metrics\n  basicAuth: false\n  isDefault: true\n  jsonData:\n     sslmode: disable\n     postgresVersion: 1700 \n  version: 1\n  editable: true\n"
-{{- else }}
-  postgres_datasource.yml: "apiVersion: 1\n\ndatasources:\n- name: pg-metrics\n  type: postgres\n  url: {{ .Values.pgwatch.postgres.use_existing_database.endpoint }}:{{ .Values.pgwatch.postgres.use_existing_database.port }}\n  access: proxy\n  password: {{ .Values.pgwatch.postgres.use_existing_database.password }}\n  user: {{ .Values.pgwatch.postgres.use_existing_database.username }}\n  database: {{ .Values.pgwatch.postgres.use_existing_database.database }}\n  basicAuth: false\n  isDefault: true\n  jsonData:\n     sslmode: {{ .Values.pgwatch.postgres.use_existing_database.sslmode | default('disable') }}\n version: 1\n  editable: true\n"
-{{ end }}
+  {{- if eq .Values.pgwatch.postgres.create_metric_database "true" }} 
+  postgres_datasource.yml: |
+    apiVersion: 1
+    datasources:
+    - name: pg-metrics
+      type: postgres
+      url: postgres-svc:5432
+      access: proxy
+      password: pgwatchadmin
+      user: pgwatch
+      database: pgwatch_metrics
+      basicAuth: true
+      isDefault: true
+      jsonData:
+        sslmode: disable
+      postgresVersion: 1700
+      version: 1
+      editable: true
+  {{- else }}
+  postgres_datasource.yml: |
+    apiVersion: 1
+    datasources:
+    - name: pg-metrics
+      type: postgres
+      url: {{ .Values.pgwatch.postgres.use_existing_database.endpoint }}:{{ .Values.pgwatch.postgres.use_existing_database.port }}
+      access: proxy
+      password: {{ .Values.pgwatch.postgres.use_existing_database.password }}
+      user: {{ .Values.pgwatch.postgres.use_existing_database.username }}
+      database: {{ .Values.pgwatch.postgres.use_existing_database.database }}
+      basicAuth: true
+      isDefault: true
+      jsonData:
+        sslmode: {{ .Values.pgwatch.postgres.use_existing_database.sslmode | default "disable" }}
+      version: 1
+      editable: true
+  {{ end }}
 ---
 apiVersion: v1
 kind: ConfigMap
