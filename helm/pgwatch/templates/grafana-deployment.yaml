@@ -113,7 +113,11 @@ metadata:
   name: grafana-datasources
   namespace: {{ .Release.Namespace }}
 data:
+{{- if eq .Values.pgwatch.postgres.create_metric_database "true" }} 
   postgres_datasource.yml: "apiVersion: 1\n\ndatasources:\n- name: pg-metrics\n  type: postgres\n  url: postgres-svc:5432\n  access: proxy\n  password: pgwatchadmin\n  user: pgwatch\n  database: pgwatch_metrics\n  basicAuth: false\n  isDefault: true\n  jsonData:\n     sslmode: disable\n     postgresVersion: 1700 \n  version: 1\n  editable: true\n"
+{{- else }}
+  postgres_datasource.yml: "apiVersion: 1\n\ndatasources:\n- name: pg-metrics\n  type: postgres\n  url: {{ .Values.pgwatch.postgres.use_existing_database.endpoint }}:{{ .Values.pgwatch.postgres.use_existing_database.port }}\n  access: proxy\n  password: {{ .Values.pgwatch.postgres.use_existing_database.password }}\n  user: {{ .Values.pgwatch.postgres.use_existing_database.username }}\n  database: {{ .Values.pgwatch.postgres.use_existing_database.database }}\n  basicAuth: false\n  isDefault: true\n  jsonData:\n     sslmode: {{ .Values.pgwatch.postgres.use_existing_database.sslmode | default('disable') }}\n version: 1\n  editable: true\n"
+{{ end }}
 ---
 apiVersion: v1
 kind: ConfigMap
