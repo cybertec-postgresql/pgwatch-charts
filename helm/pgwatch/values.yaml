@@ -19,6 +19,7 @@ pgwatch:
     #   sslmode:  disable
     #   username: pgwatch_user
     #   password: PASSWORD_FOR_PGWATCH_USER
+    #   sslmode: require
   prometheus: 
     enable_prom_sink: "true"
     new_prometheus:
