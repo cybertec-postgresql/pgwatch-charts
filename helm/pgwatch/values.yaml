@@ -1,0 +1,37 @@
+pgwatch:
+  image: "docker.io/cybertecpostgresql/pgwatch:latest"
+  namespace: pgwatch
+  postgres:
+    enable_pg_sink: "true"
+    settings: 
+      retention_days: 31
+    # define is a database for the metrics needs to be created or if there is already an existing database
+    create_metric_database: "true" #"false"
+    new_pg_database: # Will be used for pgqwatch config only, if enable_pg_sink = "false"
+      image: "docker.io/schmaetz/postgres:bookworm-17.4-1"
+      volume:
+        size: '10Gi'
+        storageClass: 'crc-csi-hostpath-provisioner'
+    # use_existing_database: # Will be used for pgqwatch config only, if enable_pg_sink = "false"
+    #   endpoint: postgresql.local
+    #   port:     '5432'
+    #   database: PGWATCH_DATABASE
+    #   sslmode:  require
+    #   username: pgwatch_user
+    #   password: PASSWORD_FOR_PGWATCH_USER
+  prometheus: 
+    enable_prom_sink: "true"
+    new_prometheus:
+      create_prometheus: "false"
+      create_alertmanager: "false"
+      image: "prom/prometheus:main"
+      settings:
+        retention_days: 31
+      volume:
+        size: '10Gi'
+        storageClass: 'crc-csi-hostpath-provisioner'
+  grafana:
+    enable_grafana: "true"
+    enable_datasources:
+      postgres: "true"
+      prometheus: "false"

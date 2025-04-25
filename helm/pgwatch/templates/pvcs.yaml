@@ -1,0 +1,17 @@
+{{- if eq .Values.pgwatch.prometheus.new_prometheus.create_prometheus "true" }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app.kubernetes.io/name: cpo-monitoring
+    vendor: opensource.cybertec
+  name: prometheus-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.pgwatch.prometheus.new_prometheus.volume.size }}
+  storageClassName: {{ .Values.pgwatch.prometheus.new_prometheus.volume.storageClass }}
+{{ end }}

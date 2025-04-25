@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    application: pgwatch
+    pgwatch.pods.role: pgwatch
+  name: pgwatch
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      application: pgwatch
+      pgwatch.pods.role: pgwatch
+  template:
+    metadata:
+      labels:
+        application: pgwatch
+        pgwatch.pods.role: pgwatch
+    spec:
+      containers:
+        - env:
+        {{- if eq .Values.pgwatch.postgres.create_metric_database "true" }} 
+          - name: PGWATCH_USER
+            valueFrom:
+              secretKeyRef:
+                name: pgwatch-postgresql-secret-pgwatch
+                key: username
+          - name: PGWATCH_USER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: pgwatch-postgresql-secret-pgwatch
+                key: password
+          - name: METRIC_DATABASE_ENDPOINT
+            value: "postgres-svc.{{ .Release.Namespace }}.svc.cluster.local"
+          - name: METRIC_DATABASE_PORT
+            value: "5432"
+          - name: METRIC_DATABASE_DATABASE
+            value: pgwatch_metrics
+          - name: METRIC_DATABASE_SSLMODE
+            value: disable
+        {{- else }}
+          - name: PGWATCH_USER
+            value: {{ .Values.pgwatch.postgres.use_existing_database.username }}
+          - name: PGWATCH_USER_PASSWORD
+            value: {{ .Values.pgwatch.postgres.use_existing_database.password }}
+          - name: METRIC_DATABASE_ENDPOINT
+            value: {{ .Values.pgwatch.postgres.use_existing_database.endpoint }}
+          - name: METRIC_DATABASE_PORT
+            value: "{{ .Values.pgwatch.postgres.use_existing_database.port }}"
+          - name: METRIC_DATABASE_DATABASE
+            value: {{ .Values.pgwatch.postgres.use_existing_database.database }}
+          - name: METRIC_DATABASE_SSLMODE
+            value: {{ .Values.pgwatch.postgres.use_existing_database.sslmode }}
+        {{ end }}
+        {{- if eq .Values.pgwatch.postgres.enable_pg_sink "true" }}
+          - name: PG_IS_SINK
+            value: "true"
+          - name: PG_RETENTION_DAYS
+            value: "{{ .Values.pgwatch.postgres.settings.retention_days }}"
+        {{ end }}
+        {{- if eq .Values.pgwatch.prometheus.enable_prom_sink "true" }}
+          - name: PROM_IS_SINK
+            value: "true"
+        {{ end }}
+          image: {{ .Values.pgwatch.image }}
+          volumeMounts:
+          - name: launcher
+            mountPath: /tmp/launcher.sh
+            subPath: launcher.sh
+          name: pgwatch
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+        {{- if eq .Values.pgwatch.prometheus.enable_prom_sink "true" }}
+            - containerPort: 9188
+              protocol: TCP
+        {{ end }}
+          command: ["/tmp/launcher.sh"]
+      volumes:
+      - name: launcher
+        configMap:
+          name: pgwatch-cm
+          defaultMode: 0777  # Damit es direkt ausführbar ist
+      restartPolicy: Always
+

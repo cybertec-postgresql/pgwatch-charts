@@ -1,0 +1,81 @@
+{{- if eq .Values.pgwatch.postgres.create_metric_database "true" }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: {{ .Release.Namespace }}
+spec:
+  serviceName: "postgres-svc"
+  replicas: 1
+  selector:
+    matchLabels:
+      application: pgwatch
+      pgwatch.pods.role: postgres
+  template:
+    metadata:
+      labels:
+        application: pgwatch
+        pgwatch.pods.role: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: {{ .Values.pgwatch.postgres.new_pg_database.image }}
+        ports:
+        - containerPort: 5432
+          name: postgres
+        env:
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pgwatch-postgresql-secret-postgres
+              key: password
+        - name: POSTGRES_USER
+          value: postgres
+        - name: ADDITIONAL_USER
+          valueFrom:
+            secretKeyRef:
+              name: pgwatch-postgresql-secret-pgwatch
+              key: username
+        - name: ADDITIONAL_USER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pgwatch-postgresql-secret-pgwatch
+              key: password
+        - name: ADDITIONAL_DB1
+          value: pgwatch
+        - name: ADDITIONAL_DB2
+          value: pgwatch_metrics
+        - name: ADDITIONAL_DB3
+          value: pgwatch_grafana
+        - name: PGDATA
+          value: /pgdata/data
+        volumeMounts:
+        - name: pgdata
+          mountPath: /pgdata
+        lifecycle:
+          postStart:
+            exec:
+              command:
+                - "/bin/bash"
+                - "-c"
+                - |
+                  psql -U $POSTGRES_USER -c "DO \$\$ BEGIN IF EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '$ADDITIONAL_USER') THEN RAISE NOTICE 'Role \"$ADDITIONAL_USER\" already exists. Skipping.'; ELSE CREATE ROLE $ADDITIONAL_USER LOGIN PASSWORD '$ADDITIONAL_USER_PASSWORD'; END IF; END \$\$;"
+                  psql -U $POSTGRES_USER -tc "SELECT 1 FROM pg_database WHERE datname = '$ADDITIONAL_DB1'" | grep -q 1 || psql -U $POSTGRES_USER -c "CREATE DATABASE $ADDITIONAL_DB1"
+                  psql -U $POSTGRES_USER -tc "SELECT 1 FROM pg_database WHERE datname = '$ADDITIONAL_DB2'" | grep -q 1 || psql -U $POSTGRES_USER -c "CREATE DATABASE $ADDITIONAL_DB2"
+                  psql -U $POSTGRES_USER -tc "SELECT 1 FROM pg_database WHERE datname = '$ADDITIONAL_DB3'" | grep -q 1 || psql -U $POSTGRES_USER -c "CREATE DATABASE $ADDITIONAL_DB3"
+                  psql -U $POSTGRES_USER -c "ALTER DATABASE $ADDITIONAL_DB1 OWNER TO $ADDITIONAL_USER;"
+                  psql -U $POSTGRES_USER -c "ALTER DATABASE $ADDITIONAL_DB2 OWNER TO $ADDITIONAL_USER;"
+                  psql -U $POSTGRES_USER -c "ALTER DATABASE $ADDITIONAL_DB3 OWNER TO $ADDITIONAL_USER;"
+  volumeClaimTemplates:
+  - metadata:
+      name: pgdata
+      labels:
+        application: pgwatch
+        pgwatch.pods.role: postgres
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: {{ .Values.pgwatch.postgres.new_pg_database.volume.storageClass }}
+      resources:
+        requests:
+          storage: {{ .Values.pgwatch.postgres.new_pg_database.volume.size }}
+{{ end }}
