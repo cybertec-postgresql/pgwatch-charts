@@ -27,6 +27,6 @@ data:
       - scheme: http
         static_configs:
         - targets:
-          - "cpo-monitoring-alertmanager:9093"
+          - "pgwatch-alertmanager-svc:9093"
   {{ end }}
 {{ end }}

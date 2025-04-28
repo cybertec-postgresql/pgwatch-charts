@@ -68,3 +68,19 @@ spec:
   selector:
     name: pgwatch-prometheus
 {{ end }}
+---
+{{- if eq .Values.pgwatch.prometheus.new_prometheus.create_alertmanager "true" }}
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    application: pgwatch
+  name: pgwatch-alertmanager-svc
+spec:
+  type: ClusterIP
+  ports:
+  - name: prometheus
+    port: 9093
+  selector:
+    name: pgwatch-alertmanager
+{{ end }}
