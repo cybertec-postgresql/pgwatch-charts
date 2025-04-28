@@ -56,6 +56,10 @@ spec:
           name: prometheus-cm
         - mountPath: /prometheus
           name: prometheus-volume
+        {{- if eq .Values.pgwatch.prometheus.new_prometheus.create_alertmanager "true" }}
+        - mountPath: /etc/prometheus/alert-rules.d
+          name: alertmanagerrules
+        {{ end }}
       securityContext: {}
       dnsPolicy: ClusterFirst
       restartPolicy: Always
@@ -69,6 +73,12 @@ spec:
       - name: prometheus-volume
         persistentVolumeClaim:
           claimName: prometheus-pvc
+      {{- if eq .Values.pgwatch.prometheus.new_prometheus.create_alertmanager "true" }}
+      - configMap:
+          defaultMode: 420
+          name: alertmanager-rules-config
+        name: alertmanagerrules
+      {{ end }}
   progressDeadlineSeconds: 600
   replicas: 1
   revisionHistoryLimit: 10

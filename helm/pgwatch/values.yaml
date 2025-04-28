@@ -30,6 +30,8 @@ pgwatch:
       volume:
         size: '10Gi'
         storageClass: 'crc-csi-hostpath-provisioner'
+      alertmanager:
+        image: "prom/alertmanager:main"
   grafana:
     enable_grafana: "true"
     enable_datasources:
