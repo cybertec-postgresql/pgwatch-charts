@@ -18,4 +18,15 @@ data:
     - job_name: 'pgwatch' 
       static_configs:
         - targets: ['pgwatch-svc.pgwatch.svc.cluster.local:9188'] 
+  {{- if eq .Values.pgwatch.prometheus.new_prometheus.create_alertmanager "true" }}
+
+    rule_files:
+      - /etc/prometheus/alert-rules.d/*.yml
+    alerting:
+      alertmanagers:
+      - scheme: http
+        static_configs:
+        - targets:
+          - "cpo-monitoring-alertmanager:9093"
+  {{ end }}
 {{ end }}

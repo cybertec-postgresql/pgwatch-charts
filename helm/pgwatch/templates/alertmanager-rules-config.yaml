@@ -20,7 +20,7 @@ data:
           severity: medium
           severity_num: 300
         annotations:
-          summary: '{{ $labels.clusterid }}: The exporter reports errors when retrieving data from Pod: {{ $labels.clustername }}. (Number of errors: ( {{ $value }} )'
+          summary: "{{ $labels.clusterid }}: The exporter reports errors when retrieving data from Pod: {{ $labels.clustername }}. (Number of errors: ( {{ $value }} )"
 
 
     #PostgreSQL-Alerts
