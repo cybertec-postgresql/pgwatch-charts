@@ -1,37 +1,53 @@
 pgwatch:
-  image: "docker.io/cybertecpostgresql/pgwatch:latest"
+  # pgwatch image, now using lightweight Alpine variant for faster startup
+  image: "docker.io/cybertecpostgresql/pgwatch:1.18.0-alpine"
   namespace: pgwatch
+
   postgres:
     enable_pg_sink: "true"
     settings: 
       retention_days: 31
-    # define is a database for the metrics needs to be created or if there is already an existing database
+    # define if a database for the metrics needs to be created or if there is already an existing database
     create_metric_database: "true" #"false"
-    new_pg_database: # Will be used for pgqwatch config only, if enable_pg_sink = "false"
-      image: "docker.io/schmaetz/postgres:bookworm-17.4-1"
+    new_pg_database: # Will be used for pgwatch config only, if enable_pg_sink = "false"
+      # Postgres image now using Alpine variant
+      image: "docker.io/library/postgres:17.4-alpine"   
       volume:
         size: '10Gi'
         storageClass: 'crc-csi-hostpath-provisioner'
-    # use_existing_database: # Will be used for pgqwatch config only, if enable_pg_sink = "false"
+
+    # Base64-encoded credentials (to match secrets.yaml)
+    credentials:
+      usernameSecretName: pgwatch-postgresql-secret-pgwatch
+      usernameSecretKey: username
+      passwordSecretName: pgwatch-postgresql-secret-pgwatch
+      passwordSecretKey: password
+
+    # use_existing_database: # Will be used for pgwatch config only, if enable_pg_sink = "false"
     #   endpoint: postgresql.local
     #   port:     '5432'
     #   database: PGWATCH_DATABASE
     #   sslmode:  require
     #   username: pgwatch_user
     #   password: PASSWORD_FOR_PGWATCH_USER
+
   prometheus: 
     enable_prom_sink: "true"
     new_prometheus:
       create_prometheus: "false"
       create_alertmanager: "false"
-      image: "prom/prometheus:main"
+      # Prometheus Alpine image for faster deployment
+      image: "prom/prometheus:v2.47.0-alpine" 
       settings:
         retention_days: 31
       volume:
         size: '10Gi'
         storageClass: 'crc-csi-hostpath-provisioner'
+
   grafana:
     enable_grafana: "true"
+    # Grafana Alpine image
+    image: "grafana/grafana:10.1.1-alpine"   
     enable_datasources:
       postgres: "true"
       prometheus: "false"
