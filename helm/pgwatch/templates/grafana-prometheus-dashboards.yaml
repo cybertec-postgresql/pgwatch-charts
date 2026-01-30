@@ -1,0 +1,18 @@
+{{- if eq .Values.pgwatch.prometheus.enable_prom_sink "true" }}
+{{- range $path, $_ := .Files.Glob "dashboards/prometheus/*.json" }}
+{{- $filename := base $path }}
+{{- $name := $filename | lower | replace "." "-" | replace "_" "-" }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-prometheus-dashboard-{{ $name }}
+  labels:
+    application: pgwatch    
+    vendor: opensource.cybertec
+    grafana_dashboard: "1"
+data:
+  {{ $filename }}: |-
+{{ $.Files.Get $path | indent 4 }}
+{{- end }}
+{{- end }}

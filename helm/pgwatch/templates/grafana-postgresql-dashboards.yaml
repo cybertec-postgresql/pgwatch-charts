@@ -1,0 +1,18 @@
+{{- if eq .Values.pgwatch.postgres.enable_pg_sink "true" }}
+{{- range $path, $_ := .Files.Glob "dashboards/postgresql/*.json" }}
+{{- $filename := base $path }}
+{{- $name := $filename | lower | replace "." "-" | replace "_" "-" }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-postgresql-dashboard-{{ $name }}
+  labels:
+    application: pgwatch    
+    vendor: opensource.cybertec
+    grafana_dashboard: "1"
+data:
+  {{ $filename }}: |-
+{{ $.Files.Get $path | indent 4 }}
+{{- end }}
+{{- end }}

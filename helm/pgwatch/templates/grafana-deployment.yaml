@@ -73,9 +73,9 @@ spec:
             - mountPath: /etc/grafana/provisioning/datasources/pg_ds.yml
               name: grafana-datasources
               subPath: pg_ds.yml
-            - mountPath: /etc/grafana/provisioning/dashboards/pg_db.yml
-              name: grafana-config
-              subPath: pg_db.yml
+            - mountPath: /etc/grafana/provisioning/dashboards/dashboards_provider.yml
+              name: grafana-dashboard-config
+              subPath: dashboards_provider.yml
             - mountPath: /var/lib/grafana/dashboards
               name: grafana-dashboards
       restartPolicy: Always
@@ -86,22 +86,32 @@ spec:
                 path: pg_ds.yml
             name: grafana-datasources
           name: grafana-datasources
-        - configMap:
-            items:
-              - key: postgres_dashboard.yml
-                path: pg_db.yml
-            name: grafana-config
-          name: grafana-config
+        - name: grafana-dashboard-config
+          configMap:
+            name: grafana-dashboard-config
         - name: grafana-dashboards
           projected:
+            defaultMode: 416
             sources:
+              {{- if eq .Values.pgwatch.postgres.enable_pg_sink "true" }}
+              {{- range $path, $_ := .Files.Glob "dashboards/postgresql/*.json" }}
               - configMap:
-                  name: grafana-dashboards-basics
-                  optional: true
+                  name: "grafana-postgresql-dashboard-{{ base $path | lower | replace "." "-" | replace "_" "-" }}"
+                  items:
+                    - key: {{ base $path }}
+                      path: "postgresql/{{ base $path }}"
+              {{- end }}
+              {{- end }}
+
+              {{- if eq .Values.pgwatch.prometheus.enable_prom_sink "true" }}
+              {{- range $path, $_ := .Files.Glob "dashboards/prometheus/*.json" }}
               - configMap:
-                  name: grafana-dashboards-others
-                  optional: true
-            defaultMode: 416       
+                  name: "grafana-prometheus-dashboard-{{ base $path | lower | replace "." "-" | replace "_" "-" }}"
+                  items:
+                    - key: {{ base $path }}
+                      path: "prometheus/{{ base $path }}"
+              {{- end }}
+              {{- end }}       
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -113,10 +123,11 @@ metadata:
   name: grafana-datasources
   namespace: {{ .Release.Namespace }}
 data:
-  {{- if eq .Values.pgwatch.postgres.create_metric_database "true" }} 
   postgres_datasource.yml: |
     apiVersion: 1
     datasources:
+  {{- if eq .Values.pgwatch.postgres.enable_pg_sink "true" }}
+  {{- if eq .Values.pgwatch.postgres.create_metric_database "true" }} 
     - name: pg-metrics
       type: postgres
       url: postgres-svc:5432
@@ -132,9 +143,6 @@ data:
       version: 1
       editable: true
   {{- else }}
-  postgres_datasource.yml: |
-    apiVersion: 1
-    datasources:
     - name: pg-metrics
       type: postgres
       url: {{ .Values.pgwatch.postgres.use_existing_database.endpoint }}:{{ .Values.pgwatch.postgres.use_existing_database.port }}
@@ -149,25 +157,22 @@ data:
       version: 1
       editable: true
   {{ end }}
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  labels:
-    application: pgwatch
-  name: grafana-config
-  namespace: {{ .Release.Namespace }}
-data:
-  postgres_dashboard.yml: |
-    apiVersion: 1
-
-    providers:
-    - name: 'default'
+  {{ end }}
+  {{- if eq .Values.pgwatch.prometheus.enable_prom_sink "true" }}
+    - name: PROMETHEUS
+      type: prometheus
+      access: proxy
       orgId: 1
-      folder: ''
-      type: file
-      disableDeletion: false
-      updateIntervalSeconds: 10 #how often Grafana will scan for changed dashboards
-      options:
-        path: /var/lib/grafana/dashboards
+      url: http://pgwatch-prometheus-svc:9090
+      password:
+      user:
+      database:
+      basicAuth:
+      basicAuthUser:
+      basicAuthPassword:
+      withCredentials:
+      isDefault: true
+      version: 1
+      editable: false
+  {{ end }}
 {{ end }}
