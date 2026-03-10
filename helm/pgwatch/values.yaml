@@ -8,10 +8,10 @@ pgwatch:
     # define is a database for the metrics needs to be created or if there is already an existing database
     create_metric_database: "true" #"false"
     new_pg_database: # Will be used for pgqwatch config only, if enable_pg_sink = "false"
-      image: "docker.io/schmaetz/postgres:bookworm-17.4-1"
+      image: "docker.io/postgres:18.3-alpine3.23"
       volume:
         size: '10Gi'
-        storageClass: 'crc-csi-hostpath-provisioner'
+        storageClass: 'standard'
     # use_existing_database: # Will be used for pgqwatch config only, if enable_pg_sink = "false"
     #   endpoint: postgresql.local
     #   port:     '5432'
@@ -22,15 +22,16 @@ pgwatch:
   prometheus: 
     enable_prom_sink: "true"
     new_prometheus:
-      create_prometheus: "false"
+      create_prometheus: "true"
       create_alertmanager: "false"
       image: "prom/prometheus:main"
       settings:
         retention_days: 31
       volume:
         size: '10Gi'
-        storageClass: 'crc-csi-hostpath-provisioner'
+        storageClass: 'standard'
   grafana:
+    image: grafana/grafana:12.4.0-21419697389 # Dashboards are prepared for grafana v12
     enable_grafana: "true"
     enable_datasources:
       postgres: "true"
