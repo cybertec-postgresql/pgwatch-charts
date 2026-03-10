@@ -63,8 +63,8 @@ spec:
               value: {{ .Values.pgwatch.postgres.use_existing_database.username }}
             - name: GF_DATABASE_PASSWORD
               value: {{ .Values.pgwatch.postgres.use_existing_database.password }}
-            {{ end }}
-          image: grafana/grafana:10.4.7
+            {{- end }}
+          image: {{ .Values.pgwatch.grafana.image }}
           name: grafana
           ports:
             - containerPort: 3000
@@ -171,7 +171,9 @@ data:
       basicAuthUser:
       basicAuthPassword:
       withCredentials:
+      {{- if eq .Values.pgwatch.postgres.enable_pg_sink "false" }}
       isDefault: true
+      {{- end}}
       version: 1
       editable: false
   {{ end }}

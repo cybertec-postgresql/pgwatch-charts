@@ -17,6 +17,26 @@ spec:
         application: pgwatch
         pgwatch.pods.role: postgres
     spec:
+      initContainers:
+      - name: init-permissions
+        env:
+        - name: PGDATA
+          value: /pgdata/data
+        image: {{ .Values.pgwatch.postgres.new_pg_database.image }}
+        command:
+        - /bin/sh
+        - -c
+        - |
+          if [ ! -d "$PGDATA" ]; then
+            if [ "$(id -u)" = "0" ]; then
+              mkdir -p "$PGDATA"
+              chown postgres "$PGDATA"
+              chmod 700 "$PGDATA"
+            fi
+          fi
+        volumeMounts:
+        - name: pgdata
+          mountPath: /pgdata
       containers:
       - name: postgres
         image: {{ .Values.pgwatch.postgres.new_pg_database.image }}

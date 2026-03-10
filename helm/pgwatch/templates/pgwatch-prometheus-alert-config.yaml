@@ -1,0 +1,25 @@
+# File to configure the Alertmanager
+# This file is part of the CPO monitoring stack from CYBERTEC PostgreSQL International GmbH.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/name: pgwatch
+    vendor: opensource.cybertec
+    postgres-operator.cybertec.at/stack: pgwatch
+  name: pgwatch-prometheus-alerts
+data:
+  pgwatch-prometheus-alert-rules.yml: |
+    groups:
+    - name: alert-rules
+      rules:
+    #PostgreSQL-Alerts
+      - alert: Postgres-Instance down
+        expr: pgwatch_instance_up < 1
+        for: 60s
+        labels:
+          service: postgresql
+          severity: critical
+          severity_num: 400
+        annotations:
+          summary: '{{ "{{" }} $labels.instance {{ "}}" }}: Instance: {{ "{{" }} $labels.dbname {{ "}}" }} seems to be down. PGWatch is not able to communicate with the Instance.'
