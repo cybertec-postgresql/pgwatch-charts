@@ -40,7 +40,7 @@ spec:
             value: pgwatch_metrics
           - name: METRIC_DATABASE_SSLMODE
             value: disable
-        {{- else }}
+        {{- else if .Values.pgwatch.postgres.use_existing_database }}
           - name: PGWATCH_USER
             value: {{ .Values.pgwatch.postgres.use_existing_database.username }}
           - name: PGWATCH_USER_PASSWORD

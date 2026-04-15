@@ -55,7 +55,7 @@ spec:
                 secretKeyRef:
                   name: pgwatch-postgresql-secret-pgwatch
                   key: password
-            {{- else }}
+            {{- else if .Values.pgwatch.postgres.use_existing_database }}
             - name: GF_DATABASE_TYPE
               value: postgres
             - name: GF_DATABASE_HOST
@@ -175,7 +175,7 @@ data:
       postgresVersion: 1700
       version: 1
       editable: true
-  {{- else }}
+  {{- else if .Values.pgwatch.postgres.use_existing_database }}
     - name: pgwatch-metrics
       type: postgres
       url: {{ .Values.pgwatch.postgres.use_existing_database.endpoint }}:{{ .Values.pgwatch.postgres.use_existing_database.port }}
