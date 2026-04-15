@@ -33,7 +33,7 @@ spec:
                 name: pgwatch-postgresql-secret-pgwatch
                 key: password
           - name: METRIC_DATABASE_ENDPOINT
-            value: "postgres-svc.{{ .Release.Namespace }}.svc.cluster.local"
+            value: "{{ include "pgwatch.dbHost" . }}.{{ .Release.Namespace }}.svc.cluster.local"
           - name: METRIC_DATABASE_PORT
             value: "5432"
           - name: METRIC_DATABASE_DATABASE
@@ -97,4 +97,3 @@ spec:
           name: pgwatch-cm
           defaultMode: 0777  # Damit es direkt ausführbar ist
       restartPolicy: Always
-

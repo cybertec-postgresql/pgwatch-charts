@@ -1,5 +1,20 @@
-apiVersion: v1
+apiVersion: v2
 appVersion: "3.2"
 description: A Helm chart for pgwatch monitoring tools
 name: pgwatch
 version: 3.1.0
+
+dependencies:
+  # TimescaleDB subchart — opt-in replacement for the built-in PostgreSQL StatefulSet.
+  # Activate with: timescaledb.enabled: true
+  - name: timescaledb
+    version: "0.10.4"
+    repository: "oci://registry-1.docker.io/cloudpirates"
+    condition: timescaledb.enabled
+
+  # Official Grafana subchart — opt-in replacement for the custom Grafana Deployment.
+  # Activate with: pgwatch.grafana.useSubchart: true
+  - name: grafana
+    version: "10.5.15"
+    repository: "oci://ghcr.io/grafana-community/helm-charts"
+    condition: pgwatch.grafana.useSubchart

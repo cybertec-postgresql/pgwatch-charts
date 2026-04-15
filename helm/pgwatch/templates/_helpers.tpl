@@ -77,3 +77,22 @@ securityContext:
   {{- toYaml $componentContainer | nindent 2 }}
 {{- end }}
 {{- end }}
+
+{{/*
+pgwatch.dbHost
+  Returns the hostname of the metrics database service.
+
+  Behavior:
+    - timescaledb.enabled true  -> "<release-name>-timescaledb"  (subchart service)
+    - timescaledb.enabled false -> "postgres-svc"                 (built-in StatefulSet)
+
+  Usage:
+    {{ include "pgwatch.dbHost" . }}
+*/}}
+{{- define "pgwatch.dbHost" -}}
+{{- if .Values.timescaledb.enabled -}}
+{{ .Release.Name }}-timescaledb
+{{- else -}}
+postgres-svc
+{{- end -}}
+{{- end }}

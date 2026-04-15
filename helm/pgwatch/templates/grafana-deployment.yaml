@@ -1,4 +1,8 @@
-{{- if eq .Values.pgwatch.grafana.enable_grafana "true" }}
+{{/*
+  Skipped when pgwatch.grafana.useSubchart: true — the official Grafana subchart
+  provides the Grafana instance in that case (see grafana: top-level values block).
+*/}}
+{{- if and (eq .Values.pgwatch.grafana.enable_grafana "true") (not .Values.pgwatch.grafana.useSubchart) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -36,7 +40,7 @@ spec:
             - name: GF_DATABASE_TYPE
               value: postgres
             - name: GF_DATABASE_HOST
-              value: postgres-svc:5432
+              value: "{{ include "pgwatch.dbHost" . }}:5432"
             - name: GF_DATABASE_NAME
               value: pgwatch_grafana
             - name: GF_DATABASE_SSL_MODE
@@ -122,7 +126,22 @@ spec:
                       path: "prometheus/{{ base $path }}"
               {{- end }}
               {{- end }}
+{{ end }}
 ---
+{{/*
+  grafana-datasources ConfigMap — rendered for BOTH Grafana deployment modes.
+
+  Custom Deployment (useSubchart: false):
+    Mounted as a volume inside the Grafana pod at
+    /etc/grafana/provisioning/datasources/pg_ds.yml  (via subPath).
+
+  Grafana Subchart (useSubchart: true):
+    The grafana_datasource: "1" label is watched by the k8s-sidecar container,
+    which automatically injects the content into Grafana's datasources
+    provisioning directory — no pod restart required.
+
+*/}}
+{{- if eq .Values.pgwatch.grafana.enable_grafana "true" }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -130,6 +149,10 @@ metadata:
     use-subpath: "true"
   labels:
     application: pgwatch
+    {{- if .Values.pgwatch.grafana.useSubchart }}
+    # Watched by the Grafana subchart sidecar (sidecar.datasources.label: grafana_datasource).
+    grafana_datasource: "1"
+    {{- end }}
   name: grafana-datasources
   namespace: {{ .Release.Namespace }}
 data:
@@ -140,7 +163,7 @@ data:
   {{- if eq .Values.pgwatch.postgres.create_metric_database "true" }}
     - name: pg-metrics
       type: postgres
-      url: postgres-svc:5432
+      url: "{{ include "pgwatch.dbHost" . }}:5432"
       access: proxy
       password: pgwatchadmin
       user: pgwatch
@@ -187,4 +210,4 @@ data:
       version: 1
       editable: false
   {{ end }}
-{{ end }}
+{{- end }}

@@ -19,6 +19,11 @@ spec:
     application: pgwatch
     pgwatch.pods.role: pgwatch
 ---
+{{/*
+  grafana-svc is only needed for the custom Grafana Deployment.
+  When useSubchart: true the official Grafana subchart creates its own Service.
+*/}}
+{{- if and (eq .Values.pgwatch.grafana.enable_grafana "true") (not .Values.pgwatch.grafana.useSubchart) }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -35,7 +40,12 @@ spec:
     application: pgwatch
     pgwatch.pods.role: grafana
 ---
-{{- if eq .Values.pgwatch.postgres.create_metric_database "true" }}
+{{ end }}
+{{/*
+  postgres-svc is only needed for the built-in PostgreSQL StatefulSet.
+  When timescaledb.enabled: true the TimescaleDB subchart creates its own Service.
+*/}}
+{{- if and (eq .Values.pgwatch.postgres.create_metric_database "true") (not .Values.timescaledb.enabled) }}
 apiVersion: v1
 kind: Service
 metadata:

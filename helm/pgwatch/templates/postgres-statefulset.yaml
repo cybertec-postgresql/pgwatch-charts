@@ -1,4 +1,8 @@
-{{- if eq .Values.pgwatch.postgres.create_metric_database "true" }}
+{{/*
+  Skipped when timescaledb.enabled: true — the TimescaleDB subchart provides the
+  database in that case and db-init-job.yaml handles schema/user bootstrapping.
+*/}}
+{{- if and (eq .Values.pgwatch.postgres.create_metric_database "true") (not .Values.timescaledb.enabled) }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -58,22 +62,6 @@ spec:
               key: password
         - name: POSTGRES_USER
           value: postgres
-        - name: ADDITIONAL_USER
-          valueFrom:
-            secretKeyRef:
-              name: pgwatch-postgresql-secret-pgwatch
-              key: username
-        - name: ADDITIONAL_USER_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: pgwatch-postgresql-secret-pgwatch
-              key: password
-        - name: ADDITIONAL_DB1
-          value: pgwatch
-        - name: ADDITIONAL_DB2
-          value: pgwatch_metrics
-        - name: ADDITIONAL_DB3
-          value: pgwatch_grafana
         - name: PGDATA
           value: /pgdata/data
         {{- range $key, $value := .Values.pgwatch.postgres.env }}
@@ -87,24 +75,6 @@ spec:
         volumeMounts:
         - name: pgdata
           mountPath: /pgdata
-        lifecycle:
-          postStart:
-            exec:
-              command:
-                - "/bin/bash"
-                - "-c"
-                - |
-                  until pg_isready -U $POSTGRES_USER; do
-                    echo "Waiting for PostgreSQL to be ready...";
-                    sleep 2;
-                  done
-                  psql -U $POSTGRES_USER -c "DO \$\$ BEGIN IF EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '$ADDITIONAL_USER') THEN RAISE NOTICE 'Role \"$ADDITIONAL_USER\" already exists. Skipping.'; ELSE CREATE ROLE $ADDITIONAL_USER LOGIN PASSWORD '$ADDITIONAL_USER_PASSWORD'; END IF; END \$\$;"
-                  psql -U $POSTGRES_USER -tc "SELECT 1 FROM pg_database WHERE datname = '$ADDITIONAL_DB1'" | grep -q 1 || psql -U $POSTGRES_USER -c "CREATE DATABASE $ADDITIONAL_DB1"
-                  psql -U $POSTGRES_USER -tc "SELECT 1 FROM pg_database WHERE datname = '$ADDITIONAL_DB2'" | grep -q 1 || psql -U $POSTGRES_USER -c "CREATE DATABASE $ADDITIONAL_DB2"
-                  psql -U $POSTGRES_USER -tc "SELECT 1 FROM pg_database WHERE datname = '$ADDITIONAL_DB3'" | grep -q 1 || psql -U $POSTGRES_USER -c "CREATE DATABASE $ADDITIONAL_DB3"
-                  psql -U $POSTGRES_USER -c "ALTER DATABASE $ADDITIONAL_DB1 OWNER TO $ADDITIONAL_USER;"
-                  psql -U $POSTGRES_USER -c "ALTER DATABASE $ADDITIONAL_DB2 OWNER TO $ADDITIONAL_USER;"
-                  psql -U $POSTGRES_USER -c "ALTER DATABASE $ADDITIONAL_DB3 OWNER TO $ADDITIONAL_USER;"
   volumeClaimTemplates:
   - metadata:
       name: pgdata

@@ -1,9 +1,15 @@
+{{/*
+  Only needed for the custom Grafana Deployment (useSubchart: false).
+  When useSubchart: true the official Grafana subchart sidecar discovers
+  dashboards via the grafana_dashboard ConfigMap label — no provider file needed.
+*/}}
+{{- if and (eq .Values.pgwatch.grafana.enable_grafana "true") (not .Values.pgwatch.grafana.useSubchart) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grafana-dashboard-config
   labels:
-    application: pgwatch    
+    application: pgwatch
     vendor: opensource.cybertec
 data:
   dashboards_provider.yml: |
@@ -12,7 +18,7 @@ data:
     {{- if eq .Values.pgwatch.postgres.enable_pg_sink "true" }}
     - name: 'pgwatch-postgres'
       orgId: 1
-      folder: 'PostgreSQL' 
+      folder: 'PostgreSQL'
       type: file
       options:
         path: /var/lib/grafana/dashboards/postgresql
@@ -25,3 +31,4 @@ data:
       options:
         path: /var/lib/grafana/dashboards/prometheus # Unterordner im Pod
     {{- end }}
+{{- end }}

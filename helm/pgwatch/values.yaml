@@ -1,3 +1,51 @@
+# TimescaleDB subchart — opt-in (timescaledb.enabled: true).
+# Replaces the built-in PostgreSQL StatefulSet; a post-install Job bootstraps the pgwatch user/databases.
+# All keys under timescaledb: are passed through directly to the subchart.
+# Ref: https://artifacthub.io/packages/helm/cloudpirates-timescaledb/timescaledb
+timescaledb:
+  enabled: false
+  image:
+    # -- TimescaleDB image tag. Override to select a different PG/TS version.
+    # Available tags: https://hub.docker.com/r/timescale/timescaledb/tags
+    tag: "2.26.2-pg18"
+  auth:
+    # -- Password for the postgres admin user.
+    # If empty a random password is generated and stored in the release secret.
+    postgresPassword: ""
+    # -- Name of an existing Secret that already contains the postgres password.
+    # When set, postgresPassword is ignored.
+    existingSecret: ""
+  persistence:
+    enabled: true
+    # -- Storage size for the TimescaleDB data volume.
+    size: 10Gi
+    # -- StorageClass for the PVC. Uses the cluster default when empty.
+    storageClass: ""
+
+# Grafana subchart — opt-in (pgwatch.grafana.useSubchart: true).
+# Replaces the custom Grafana Deployment; datasources are auto-provisioned via the k8s-sidecar.
+# All keys under grafana: are passed through directly to the subchart.
+# Ref: https://github.com/grafana-community/helm-charts/tree/main/charts/grafana
+grafana:
+  # -- Sidecar configuration for automatic dashboard and datasource discovery.
+  # The sidecar watches ConfigMaps labelled grafana_dashboard=1 / grafana_datasource=1
+  # in the same namespace and injects them at runtime — no pod restart needed.
+  sidecar:
+    dashboards:
+      enabled: true
+      # -- Label key used to identify dashboard ConfigMaps.
+      label: grafana_dashboard
+    datasources:
+      enabled: true
+      # -- Label key used to identify datasource ConfigMaps.
+      label: grafana_datasource
+  grafana.ini:
+    auth.anonymous:
+      enabled: true
+      org_role: Admin
+    dashboards:
+      default_home_dashboard_path: /tmp/dashboards/postgresql/1-global-db-overview.json
+
 # -- Extra arbitrary Kubernetes resources to deploy alongside the chart.
 # Follows the Bitnami extraDeploy pattern: each item is rendered via `tpl`,
 # so you can use Helm template expressions inside the objects.
@@ -150,6 +198,12 @@ pgwatch:
         size: '10Gi'
         storageClass: 'standard'
   grafana:
+    # -- Set to true to use the official Grafana Helm subchart instead of the
+    # custom Grafana Deployment bundled in this chart.
+    # When true: grafana-deployment.yaml, grafana-dashboard-config.yaml and
+    # grafana-svc are skipped; the grafana: top-level section controls the subchart.
+    # When false (default): the custom Deployment runs exactly as before.
+    useSubchart: false
     image: grafana/grafana:12.4.0-21419697389 # Dashboards are prepared for grafana v12
     enable_grafana: "true"
     enable_datasources:
