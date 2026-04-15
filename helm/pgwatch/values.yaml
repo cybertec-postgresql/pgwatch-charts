@@ -1,4 +1,241 @@
-# TimescaleDB subchart — opt-in (timescaledb.enabled: true).
+# ==============================================================================
+# Global Settings
+# Applied chart-wide. Component-specific overrides are merged on top when
+# securityContext.enabled: true.
+# ==============================================================================
+
+# -- Global Security Context
+# When enabled: false (default), only component-specific securityContext blocks are rendered as-is, if they exist.
+# When enabled: true, global values are the baseline and component-specific values are merged on top (component wins).
+securityContext:
+  # -- Master switch. Set to true to apply global defaults to all components.
+  enabled: false
+  # -- Pod-level security context. https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#PodSecurityContext
+  pod:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    fsGroupChangePolicy: "OnRootMismatch"
+  # -- Container-level security context. https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#SecurityContext
+  container:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    capabilities:
+      drop:
+        - ALL
+
+# -- Extra arbitrary Kubernetes resources to deploy alongside the chart.
+# Follows the Bitnami extraDeploy pattern: each item is rendered via `tpl`,
+# so you can use Helm template expressions inside the objects.
+# Ideal for ServiceMonitors, CRDs, additional ConfigMaps, or any resource
+# not covered by the standard chart templates.
+# No validation is performed; users are responsible for correctness.
+#
+extraDeploy: []
+
+# ==============================================================================
+# pgwatch
+# ==============================================================================
+pgwatch:
+
+  # == Core Settings ==
+
+  image: "docker.io/cybertecpostgresql/pgwatch:latest"
+  # TODO: namespace is probably dead code, templates all use {{ .Release.Namespace }}
+  #       which has advantages over using hardcoded namespace.
+  #       Remove it after double checking.
+  namespace: pgwatch
+  # -- Web UI listen port. Must match PW_WEBADDR (default :8080). Used for containerPort and Service.
+  webPort: 8080
+
+  # -- Ingress resource for the pgwatch web UI.
+  ingress:
+    enabled: false
+    # -- Ingress class (e.g. "nginx", "traefik"). Omitted if empty.
+    className: ""
+    # -- Annotations passed to the Ingress metadata (e.g. cert-manager.io/cluster-issuer).
+    annotations: {}
+    # -- Host rules with paths.
+    # Example:
+    #   hosts:
+    #     - host: pgwatch.example.com
+    #       paths:
+    #         - path: /
+    #           pathType: Prefix
+    hosts: []
+    # -- TLS secret references. Secrets must already exist in the namespace
+    # (create them manually or via cert-manager triggered by the annotation above).
+    # Example:
+    #   tls:
+    #     - secretName: pgwatch-tls
+    #       hosts:
+    #         - pgwatch.example.com
+    tls: []
+    # -- Sub-path for reverse-proxy setups (e.g. "/pgwatch").
+    # Injected as PW_WEBBASEPATH -> passed to pgwatch as --web-base-path.
+    webBasePath: ""
+
+  # -- Component-specific overrides for the pgwatch Deployment.
+  securityContext:
+    pod: {}
+    container: {}
+
+  # -- Additional environment variables for the pgwatch container.
+  # Each entry is injected as a plain key/value env var.
+  # Example:
+  #   env:
+  #     PW_LOGLEVEL: "debug"
+  #     PW_WEBBASEPATH: "/pgwatch"
+  env: {}
+  # -- Inject env vars from existing ConfigMaps or Secrets.
+  # Example:
+  #   envFrom:
+  #     - configMapRef:
+  #         name: my-pgwatch-config
+  #     - secretRef:
+  #         name: my-pgwatch-secret
+  envFrom: []
+
+  # == Metrics sink: PostgreSQL ==
+
+  postgres:
+    enable_pg_sink: "true"
+    settings:
+      retention_days: 31
+
+    # -- Set to "true" to deploy a new PostgreSQL StatefulSet (default).
+    # -- Set to "false" and configure use_existing_database below to connect to an existing instance.
+    create_metric_database: "true"
+
+    # -- New PostgreSQL instance — active when create_metric_database: "true".
+    new_pg_database:
+      image: "docker.io/postgres:18.3-alpine3.23"
+      volume:
+        size: '10Gi'
+        storageClass: 'standard'
+
+    # -- Existing PostgreSQL instance — active when create_metric_database: "false".
+    # use_existing_database:
+    #   endpoint: postgresql.local
+    #   port:     '5432'
+    #   database: PGWATCH_DATABASE
+    #   sslmode:  require
+    #   username: pgwatch_user
+    #   password: PASSWORD_FOR_PGWATCH_USER
+
+    # -- Component-specific overrides for the PostgreSQL StatefulSet.
+    securityContext:
+      pod:
+        runAsUser: 0          # Image starts as root, later drops to postgres (999)
+        runAsGroup: 0
+        fsGroup: 999          # Volume files accessible by GID 999 (postgres group)
+        runAsNonRoot: false   # Override global runAsNonRoot: true # TODO: Check if there is a better alternative
+      container:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+        capabilities:
+          drop: []            # postgres entrypoint needs capabilities
+
+    # -- Additional environment variables for the postgres container.
+    # Example:
+    #   env:
+    #     POSTGRES_MAX_CONNECTIONS: "200"
+    env: {}
+    # -- Inject env vars from existing ConfigMaps or Secrets.
+    # Example:
+    #   envFrom:
+    #     - secretRef:
+    #         name: my-postgres-secret
+    envFrom: []
+
+  # == Metrics sink: Prometheus ==
+
+  prometheus:
+    enable_prom_sink: "true"
+
+    # -- New Prometheus instance — active when create_prometheus: "true".
+    new_prometheus:
+      create_prometheus: "true"
+      create_alertmanager: "false"
+      image: "prom/prometheus:main"
+      settings:
+        retention_days: 31
+      volume:
+        size: '10Gi'
+        storageClass: 'standard'
+
+    # -- Existing Prometheus instance — active when create_prometheus: "false".
+    #
+    # TODO: Implement use_existing_prometheus
+    #
+    # use_existing_prometheus:
+    #   endpoint: prometheus.local
+    #   port:     '9090'
+
+    # -- Component-specific overrides for the Prometheus Deployment.
+    # The official Prometheus image runs as UID/GID 65534 (nobody).
+    securityContext:
+      pod:
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+      container: {}
+
+    # -- Additional environment variables for the prometheus container.
+    # Example:
+    #   env:
+    #     GOMAXPROCS: "2"
+    env: {}
+    # -- Inject env vars from existing ConfigMaps or Secrets.
+    # Example:
+    #   envFrom:
+    #     - configMapRef:
+    #         name: my-prometheus-config
+    envFrom: []
+
+  # == Visualization: Grafana ==
+
+  grafana:
+    # -- Set to true to use the official Grafana Helm subchart instead of the
+    # custom Grafana Deployment bundled in this chart.
+    # When true: grafana-deployment.yaml, grafana-dashboard-config.yaml and
+    # grafana-svc are skipped; the grafana: top-level section controls the subchart.
+    # When false (default): the custom Deployment runs exactly as before.
+    useSubchart: false
+    image: grafana/grafana:12.4.0-21419697389 # Dashboards are prepared for grafana v12
+    enable_grafana: "true"
+    enable_datasources:
+      postgres: "true"
+      prometheus: "false"
+
+    # -- Component-specific overrides for the Grafana Deployment.
+    # The official Grafana image runs as UID/GID 472.
+    securityContext:
+      pod:
+        runAsUser: 472
+        runAsGroup: 472
+        fsGroup: 472
+      container: {}
+
+    # -- Additional environment variables for the grafana container.
+    # Example:
+    #   env:
+    #     GF_SERVER_ROOT_URL: "https://grafana.example.com"
+    #     GF_LOG_LEVEL: "warn"
+    env: {}
+    # -- Inject env vars from existing ConfigMaps or Secrets.
+    # Example:
+    #   envFrom:
+    #     - secretRef:
+    #         name: my-grafana-secret
+    envFrom: []
+
+# ==============================================================================
+# Subchart pass-throughs (opt-in)
+# ==============================================================================
+
+# TimescaleDB subchart — opt-in (Needs timescaledb.enabled: true).
 # Replaces the built-in PostgreSQL StatefulSet; a post-install Job bootstraps the pgwatch user/databases.
 # All keys under timescaledb: are passed through directly to the subchart.
 # Ref: https://artifacthub.io/packages/helm/cloudpirates-timescaledb/timescaledb
@@ -45,187 +282,3 @@ grafana:
       org_role: Admin
     dashboards:
       default_home_dashboard_path: /tmp/dashboards/postgresql/1-global-db-overview.json
-
-# -- Extra arbitrary Kubernetes resources to deploy alongside the chart.
-# Follows the Bitnami extraDeploy pattern: each item is rendered via `tpl`,
-# so you can use Helm template expressions inside the objects.
-# Ideal for ServiceMonitors, CRDs, additional ConfigMaps, or any resource
-# not covered by the standard chart templates.
-# No validation is performed; users are responsible for correctness.
-#
-extraDeploy: []
-
-# -- Global Security Context
-# When enabled: false (default), only component-specific securityContext blocks are rendered as-is, if they exist.
-# When enabled: true, global values are the baseline and component-specific values are merged on top (component wins).
-securityContext:
-  # -- Master switch. Set to true to apply global defaults to all components.
-  enabled: false
-  # -- Pod-level security context. https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#PodSecurityContext
-  pod:
-    runAsNonRoot: true
-    runAsUser: 1000
-    runAsGroup: 1000
-    fsGroup: 1000
-    fsGroupChangePolicy: "OnRootMismatch"
-  # -- Container-level security context. https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#SecurityContext
-  container:
-    allowPrivilegeEscalation: false
-    readOnlyRootFilesystem: false
-    capabilities:
-      drop:
-        - ALL
-
-pgwatch:
-  image: "docker.io/cybertecpostgresql/pgwatch:latest"
-  namespace: pgwatch
-  # -- Web UI listen port. Must match PW_WEBADDR (default :8080). Used for containerPort and Service.
-  webPort: 8080
-  # -- Ingress resource for the pgwatch web UI.
-  ingress:
-    enabled: false
-    # -- Ingress class (e.g. "nginx", "traefik"). Omitted if empty.
-    className: ""
-    # -- Annotations passed to the Ingress metadata (e.g. cert-manager.io/cluster-issuer).
-    annotations: {}
-    # -- Host rules with paths.
-    # Example:
-    #   hosts:
-    #     - host: pgwatch.example.com
-    #       paths:
-    #         - path: /
-    #           pathType: Prefix
-    hosts: []
-    # -- TLS secret references. Secrets must already exist in the namespace
-    # (create them manually or via cert-manager triggered by the annotation above).
-    # Example:
-    #   tls:
-    #     - secretName: pgwatch-tls
-    #       hosts:
-    #         - pgwatch.example.com
-    tls: []
-    # -- Sub-path for reverse-proxy setups (e.g. "/pgwatch").
-    # Injected as PW_WEBBASEPATH -> passed to pgwatch as --web-base-path.
-    webBasePath: ""
-  # -- Component-specific overrides for the pgwatch Deployment.
-  securityContext:
-    pod: {}
-    container: {}
-  # -- Additional environment variables for the pgwatch container.
-  # Each entry is injected as a plain key/value env var.
-  # Example:
-  #   env:
-  #     PW_LOGLEVEL: "debug"
-  #     PW_WEBBASEPATH: "/pgwatch"
-  env: {}
-  # -- Inject env vars from existing ConfigMaps or Secrets.
-  # Example:
-  #   envFrom:
-  #     - configMapRef:
-  #         name: my-pgwatch-config
-  #     - secretRef:
-  #         name: my-pgwatch-secret
-  envFrom: []
-  postgres:
-    enable_pg_sink: "true"
-    settings:
-      retention_days: 31
-    # define is a database for the metrics needs to be created or if there is already an existing database
-    create_metric_database: "true" #"false"
-    new_pg_database: # Will be used for pgwatch config only, if enable_pg_sink = "false"
-      image: "docker.io/postgres:18.3-alpine3.23"
-      volume:
-        size: '10Gi'
-        storageClass: 'standard'
-    # use_existing_database: # Will be used for pgwatch config only, if enable_pg_sink = "false"
-    #   endpoint: postgresql.local
-    #   port:     '5432'
-    #   database: PGWATCH_DATABASE
-    #   sslmode:  require
-    #   username: pgwatch_user
-    #   password: PASSWORD_FOR_PGWATCH_USER
-    # -- Component-specific overrides for the PostgreSQL StatefulSet.
-    securityContext:
-      pod:
-        runAsUser: 0          # Image starts as root, later drops to postgres (999)
-        runAsGroup: 0
-        fsGroup: 999          # Volume files accessible by GID 999 (postgres group)
-        runAsNonRoot: false   # Override global runAsNonRoot: true # TODO: Check if there is a better alternative
-      container:
-        allowPrivilegeEscalation: false
-        readOnlyRootFilesystem: false
-        capabilities:
-          drop: []            # postgres entrypoint needs capabilities
-    # -- Additional environment variables for the postgres container.
-    # Example:
-    #   env:
-    #     POSTGRES_MAX_CONNECTIONS: "200"
-    env: {}
-    # -- Inject env vars from existing ConfigMaps or Secrets.
-    # Example:
-    #   envFrom:
-    #     - secretRef:
-    #         name: my-postgres-secret
-    envFrom: []
-  prometheus:
-    enable_prom_sink: "true"
-    # -- Component-specific overrides for the Prometheus Deployment.
-    # The official Prometheus image runs as UID/GID 65534 (nobody).
-    securityContext:
-      pod:
-        runAsUser: 65534
-        runAsGroup: 65534
-        fsGroup: 65534
-      container: {}
-    # -- Additional environment variables for the prometheus container.
-    # Example:
-    #   env:
-    #     GOMAXPROCS: "2"
-    env: {}
-    # -- Inject env vars from existing ConfigMaps or Secrets.
-    # Example:
-    #   envFrom:
-    #     - configMapRef:
-    #         name: my-prometheus-config
-    envFrom: []
-    new_prometheus:
-      create_prometheus: "true"
-      create_alertmanager: "false"
-      image: "prom/prometheus:main"
-      settings:
-        retention_days: 31
-      volume:
-        size: '10Gi'
-        storageClass: 'standard'
-  grafana:
-    # -- Set to true to use the official Grafana Helm subchart instead of the
-    # custom Grafana Deployment bundled in this chart.
-    # When true: grafana-deployment.yaml, grafana-dashboard-config.yaml and
-    # grafana-svc are skipped; the grafana: top-level section controls the subchart.
-    # When false (default): the custom Deployment runs exactly as before.
-    useSubchart: false
-    image: grafana/grafana:12.4.0-21419697389 # Dashboards are prepared for grafana v12
-    enable_grafana: "true"
-    enable_datasources:
-      postgres: "true"
-      prometheus: "false"
-    # -- Component-specific overrides for the Grafana Deployment.
-    # The official Grafana image runs as UID/GID 472.
-    securityContext:
-      pod:
-        runAsUser: 472
-        runAsGroup: 472
-        fsGroup: 472
-      container: {}
-    # -- Additional environment variables for the grafana container.
-    # Example:
-    #   env:
-    #     GF_SERVER_ROOT_URL: "https://grafana.example.com"
-    #     GF_LOG_LEVEL: "warn"
-    env: {}
-    # -- Inject env vars from existing ConfigMaps or Secrets.
-    # Example:
-    #   envFrom:
-    #     - secretRef:
-    #         name: my-grafana-secret
-    envFrom: []
