@@ -161,7 +161,7 @@ data:
     datasources:
   {{- if eq .Values.pgwatch.postgres.enable_pg_sink "true" }}
   {{- if eq .Values.pgwatch.postgres.create_metric_database "true" }}
-    - name: pg-metrics
+    - name: pgwatch-metrics
       type: postgres
       url: "{{ include "pgwatch.dbHost" . }}:5432"
       access: proxy
@@ -176,7 +176,7 @@ data:
       version: 1
       editable: true
   {{- else }}
-    - name: pg-metrics
+    - name: pgwatch-metrics
       type: postgres
       url: {{ .Values.pgwatch.postgres.use_existing_database.endpoint }}:{{ .Values.pgwatch.postgres.use_existing_database.port }}
       access: proxy
