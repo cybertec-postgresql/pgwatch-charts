@@ -18,6 +18,7 @@ spec:
         application: pgwatch
         pgwatch.pods.role: pgwatch
     spec:
+      {{- include "pgwatch.podSecurityContext" (dict "global" .Values.securityContext "component" .Values.pgwatch.securityContext) | nindent 6 }}
       containers:
         - env:
         {{- if eq .Values.pgwatch.postgres.create_metric_database "true" }}
@@ -77,6 +78,7 @@ spec:
               protocol: TCP
         {{ end }}
           command: ["/tmp/launcher.sh"]
+          {{- include "pgwatch.containerSecurityContext" (dict "global" .Values.securityContext "component" .Values.pgwatch.securityContext) | nindent 10 }}
       volumes:
       - name: launcher
         configMap:

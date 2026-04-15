@@ -17,6 +17,7 @@ spec:
         application: pgwatch
         pgwatch.pods.role: postgres
     spec:
+      {{- include "pgwatch.podSecurityContext" (dict "global" .Values.securityContext "component" .Values.pgwatch.postgres.securityContext) | nindent 6 }}
       initContainers:
       - name: init-permissions
         env:
@@ -34,11 +35,17 @@ spec:
               chmod 700 "$PGDATA"
             fi
           fi
+        # Init container must run as root to perform chown; this overrides any pod/global
+        # security context so the filesystem can be prepared for the postgres user.
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
         volumeMounts:
         - name: pgdata
           mountPath: /pgdata
       containers:
       - name: postgres
+        {{- include "pgwatch.containerSecurityContext" (dict "global" .Values.securityContext "component" .Values.pgwatch.postgres.securityContext) | nindent 8 }}
         image: {{ .Values.pgwatch.postgres.new_pg_database.image }}
         ports:
         - containerPort: 5432

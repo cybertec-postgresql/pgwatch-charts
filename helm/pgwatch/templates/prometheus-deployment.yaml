@@ -19,6 +19,7 @@ spec:
         postgres-operator.cybertec.at/stack: pgwatch
         name: pgwatch-prometheus
     spec:
+      {{- include "pgwatch.podSecurityContext" (dict "global" .Values.securityContext "component" .Values.pgwatch.prometheus.securityContext) | nindent 6 }}
       initContainers:
       - name: init-permissions
         image: busybox
@@ -26,8 +27,11 @@ spec:
         - /bin/sh
         - -c
         - chown -R 65534:65534 /prometheus
+        # Init container must run as root to perform chown; this overrides any pod/global
+        # security context so the filesystem can be prepared for the prometheus user.
         securityContext:
           runAsUser: 0
+          runAsNonRoot: false
         volumeMounts:
         - mountPath: /prometheus
           name: prometheus-volume
@@ -63,6 +67,7 @@ spec:
           - "--config.file=/etc/prometheus/prometheus.yml"
           - "--storage.tsdb.path=/prometheus"
           - "--storage.tsdb.retention.time={{ .Values.pgwatch.prometheus.new_prometheus.settings.retention_days }}d"
+        {{- include "pgwatch.containerSecurityContext" (dict "global" .Values.securityContext "component" .Values.pgwatch.prometheus.securityContext) | nindent 8 }}
         volumeMounts:
         - mountPath: /etc/prometheus
           name: prometheus-cm
@@ -70,7 +75,6 @@ spec:
           name: prometheus-volume
         - mountPath: /etc/prometheus/alert-rules.d
           name: prometheus-alerts
-      securityContext: {}
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler

@@ -21,6 +21,7 @@ spec:
         application: pgwatch
         pgwatch.pods.role: grafana
     spec:
+      {{- include "pgwatch.podSecurityContext" (dict "global" .Values.securityContext "component" .Values.pgwatch.grafana.securityContext) | nindent 6 }}
       containers:
         - env:
             - name: GF_AUTH_ANONYMOUS_ENABLED
@@ -31,7 +32,7 @@ spec:
               value: /var/lib/grafana/dashboards/1-global-db-overview.json
           #  - name: GF_INSTALL_PLUGINS
           #    value: marcusolsson-treemap-panel
-            {{- if eq .Values.pgwatch.postgres.create_metric_database "true" }} 
+            {{- if eq .Values.pgwatch.postgres.create_metric_database "true" }}
             - name: GF_DATABASE_TYPE
               value: postgres
             - name: GF_DATABASE_HOST
@@ -78,6 +79,7 @@ spec:
               subPath: dashboards_provider.yml
             - mountPath: /var/lib/grafana/dashboards
               name: grafana-dashboards
+          {{- include "pgwatch.containerSecurityContext" (dict "global" .Values.securityContext "component" .Values.pgwatch.grafana.securityContext) | nindent 10 }}
       restartPolicy: Always
       volumes:
         - configMap:
@@ -111,7 +113,7 @@ spec:
                     - key: {{ base $path }}
                       path: "prometheus/{{ base $path }}"
               {{- end }}
-              {{- end }}       
+              {{- end }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -127,7 +129,7 @@ data:
     apiVersion: 1
     datasources:
   {{- if eq .Values.pgwatch.postgres.enable_pg_sink "true" }}
-  {{- if eq .Values.pgwatch.postgres.create_metric_database "true" }} 
+  {{- if eq .Values.pgwatch.postgres.create_metric_database "true" }}
     - name: pg-metrics
       type: postgres
       url: postgres-svc:5432

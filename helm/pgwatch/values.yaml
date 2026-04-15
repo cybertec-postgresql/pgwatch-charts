@@ -1,26 +1,71 @@
+# -- Global Security Context
+# When enabled: false (default), only component-specific securityContext blocks are rendered as-is, if they exist.
+# When enabled: true, global values are the baseline and component-specific values are merged on top (component wins).
+securityContext:
+  # -- Master switch. Set to true to apply global defaults to all components.
+  enabled: false
+  # -- Pod-level security context. https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#PodSecurityContext
+  pod:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    fsGroupChangePolicy: "OnRootMismatch"
+  # -- Container-level security context. https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#SecurityContext
+  container:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    capabilities:
+      drop:
+        - ALL
+
 pgwatch:
   image: "docker.io/cybertecpostgresql/pgwatch:latest"
   namespace: pgwatch
+  # -- Component-specific overrides for the pgwatch Deployment.
+  securityContext:
+    pod: {}
+    container: {}
   postgres:
     enable_pg_sink: "true"
-    settings: 
+    settings:
       retention_days: 31
     # define is a database for the metrics needs to be created or if there is already an existing database
     create_metric_database: "true" #"false"
-    new_pg_database: # Will be used for pgqwatch config only, if enable_pg_sink = "false"
+    new_pg_database: # Will be used for pgwatch config only, if enable_pg_sink = "false"
       image: "docker.io/postgres:18.3-alpine3.23"
       volume:
         size: '10Gi'
         storageClass: 'standard'
-    # use_existing_database: # Will be used for pgqwatch config only, if enable_pg_sink = "false"
+    # use_existing_database: # Will be used for pgwatch config only, if enable_pg_sink = "false"
     #   endpoint: postgresql.local
     #   port:     '5432'
     #   database: PGWATCH_DATABASE
     #   sslmode:  require
     #   username: pgwatch_user
     #   password: PASSWORD_FOR_PGWATCH_USER
-  prometheus: 
+    # -- Component-specific overrides for the PostgreSQL StatefulSet.
+    securityContext:
+      pod:
+        runAsUser: 0          # Image starts as root, later drops to postgres (999)
+        runAsGroup: 0
+        fsGroup: 999          # Volume files accessible by GID 999 (postgres group)
+        runAsNonRoot: false   # Override global runAsNonRoot: true # TODO: Check if there is a better alternative
+      container:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+        capabilities:
+          drop: []            # postgres entrypoint needs capabilities
+  prometheus:
     enable_prom_sink: "true"
+    # -- Component-specific overrides for the Prometheus Deployment.
+    # The official Prometheus image runs as UID/GID 65534 (nobody).
+    securityContext:
+      pod:
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+      container: {}
     new_prometheus:
       create_prometheus: "true"
       create_alertmanager: "false"
@@ -36,3 +81,11 @@ pgwatch:
     enable_datasources:
       postgres: "true"
       prometheus: "false"
+    # -- Component-specific overrides for the Grafana Deployment.
+    # The official Grafana image runs as UID/GID 472.
+    securityContext:
+      pod:
+        runAsUser: 472
+        runAsGroup: 472
+        fsGroup: 472
+      container: {}
