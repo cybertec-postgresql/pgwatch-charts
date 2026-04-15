@@ -1,0 +1,59 @@
+{{/*
+==============================================================================
+  pgwatch Helm Chart – Ingress Resource
+==============================================================================
+  Renders a networking.k8s.io/v1 Ingress for the pgwatch web UI.
+
+  Enable via:
+    pgwatch.ingress.enabled: true
+
+  Supports:
+    - ingressClassName  (spec.ingressClassName)
+    - Multiple hosts with paths and pathType (default: Prefix)
+    - TLS blocks with secret references (for cert-manager or pre-existing certs)
+    - Free-form annotations (cert-manager, nginx, traefik, etc.)
+    - webBasePath: when set, injected into the pgwatch container as
+      PW_WEBBASEPATH
+
+  The ingress backend always points to pgwatch-svc using the named port
+  "pgwatch" (avoids hardcoding a port number; the actual port is controlled
+  by pgwatch.webPort in values.yaml).
+==============================================================================
+*/}}
+{{- if .Values.pgwatch.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pgwatch-ingress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    application: pgwatch
+    pgwatch.pods.role: pgwatch
+  {{- with .Values.pgwatch.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.pgwatch.ingress.className }}
+  ingressClassName: {{ .Values.pgwatch.ingress.className | quote }}
+  {{- end }}
+  {{- if .Values.pgwatch.ingress.tls }}
+  tls:
+    {{- toYaml .Values.pgwatch.ingress.tls | nindent 4 }}
+  {{- end }}
+  rules:
+    {{- range .Values.pgwatch.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path | quote }}
+            pathType: {{ .pathType | default "Prefix" }}
+            backend:
+              service:
+                name: pgwatch-svc
+                port:
+                  name: pgwatch
+          {{- end }}
+    {{- end }}
+{{- end }}

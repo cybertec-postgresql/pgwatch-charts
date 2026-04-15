@@ -8,12 +8,12 @@ metadata:
 spec:
   ports:
     - name: pgwatch
-      port: 8080
-      targetPort: 8080
+      port: {{ .Values.pgwatch.webPort }}
+      targetPort: {{ .Values.pgwatch.webPort }}
 {{- if eq .Values.pgwatch.prometheus.new_prometheus.create_prometheus "true" }}
     - name: pgwatch-prometheus-sink
       port: 9188
-      targetPort: 9188    
+      targetPort: 9188
 {{ end }}
   selector:
     application: pgwatch

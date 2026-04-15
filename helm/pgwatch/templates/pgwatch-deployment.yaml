@@ -64,6 +64,10 @@ spec:
           - name: PROM_IS_SINK
             value: "true"
         {{ end }}
+        {{- if and .Values.pgwatch.ingress.enabled .Values.pgwatch.ingress.webBasePath }}
+          - name: PW_WEBBASEPATH
+            value: {{ .Values.pgwatch.ingress.webBasePath | quote }}
+        {{- end }}
         {{- range $key, $value := .Values.pgwatch.env }}
           - name: {{ $key }}
             value: {{ $value | quote }}
@@ -79,7 +83,7 @@ spec:
             subPath: launcher.sh
           name: pgwatch
           ports:
-            - containerPort: 8080
+            - containerPort: {{ .Values.pgwatch.webPort }}
               protocol: TCP
         {{- if eq .Values.pgwatch.prometheus.enable_prom_sink "true" }}
             - containerPort: 9188

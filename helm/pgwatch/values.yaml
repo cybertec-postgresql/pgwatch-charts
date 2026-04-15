@@ -31,6 +31,34 @@ securityContext:
 pgwatch:
   image: "docker.io/cybertecpostgresql/pgwatch:latest"
   namespace: pgwatch
+  # -- Web UI listen port. Must match PW_WEBADDR (default :8080). Used for containerPort and Service.
+  webPort: 8080
+  # -- Ingress resource for the pgwatch web UI.
+  ingress:
+    enabled: false
+    # -- Ingress class (e.g. "nginx", "traefik"). Omitted if empty.
+    className: ""
+    # -- Annotations passed to the Ingress metadata (e.g. cert-manager.io/cluster-issuer).
+    annotations: {}
+    # -- Host rules with paths.
+    # Example:
+    #   hosts:
+    #     - host: pgwatch.example.com
+    #       paths:
+    #         - path: /
+    #           pathType: Prefix
+    hosts: []
+    # -- TLS secret references. Secrets must already exist in the namespace
+    # (create them manually or via cert-manager triggered by the annotation above).
+    # Example:
+    #   tls:
+    #     - secretName: pgwatch-tls
+    #       hosts:
+    #         - pgwatch.example.com
+    tls: []
+    # -- Sub-path for reverse-proxy setups (e.g. "/pgwatch").
+    # Injected as PW_WEBBASEPATH -> passed to pgwatch as --web-base-path.
+    webBasePath: ""
   # -- Component-specific overrides for the pgwatch Deployment.
   securityContext:
     pod: {}
