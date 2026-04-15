@@ -1,3 +1,12 @@
+# -- Extra arbitrary Kubernetes resources to deploy alongside the chart.
+# Follows the Bitnami extraDeploy pattern: each item is rendered via `tpl`,
+# so you can use Helm template expressions inside the objects.
+# Ideal for ServiceMonitors, CRDs, additional ConfigMaps, or any resource
+# not covered by the standard chart templates.
+# No validation is performed; users are responsible for correctness.
+#
+extraDeploy: []
+
 # -- Global Security Context
 # When enabled: false (default), only component-specific securityContext blocks are rendered as-is, if they exist.
 # When enabled: true, global values are the baseline and component-specific values are merged on top (component wins).

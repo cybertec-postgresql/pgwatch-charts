@@ -1,0 +1,25 @@
+{{- /*
+  extra_deploys.yaml
+  ------------------
+  Renders every object listed in .Values.extraDeploy as a standalone
+  Kubernetes manifest, separated by YAML document markers (---).
+
+  Each item is passed through `tpl` so that Helm template expressions
+  (e.g. {{ .Release.Name }}, {{ .Values.pgwatch.namespace }}) can be
+  used inside the objects defined in values.yaml.
+
+  Responsibility note:
+    extraDeploy is a power-user escape hatch. The chart does no
+    validation of the rendered objects; the operator who sets
+    extraDeploy is fully responsible for the correctness and security
+    of those resources.
+
+  Reference: Bitnami extraDeploy pattern
+    e.g. https://github.com/bitnami/charts/blob/main/bitnami/kong/templates/extra-list.yaml
+*/}}
+{{- if .Values.extraDeploy }}
+{{- range .Values.extraDeploy }}
+---
+{{ tpl (toYaml .) $ }}
+{{- end }}
+{{- end }}
