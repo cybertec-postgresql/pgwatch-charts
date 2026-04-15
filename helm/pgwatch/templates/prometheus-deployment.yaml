@@ -19,6 +19,18 @@ spec:
         postgres-operator.cybertec.at/stack: pgwatch
         name: pgwatch-prometheus
     spec:
+      initContainers:
+      - name: init-permissions
+        image: busybox
+        command:
+        - /bin/sh
+        - -c
+        - chown -R 65534:65534 /prometheus
+        securityContext:
+          runAsUser: 0
+        volumeMounts:
+        - mountPath: /prometheus
+          name: prometheus-volume
       containers:
       - image: {{ .Values.pgwatch.prometheus.new_prometheus.image }}
         imagePullPolicy: IfNotPresent

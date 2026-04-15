@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - env:
-        {{- if eq .Values.pgwatch.postgres.create_metric_database "true" }} 
+        {{- if eq .Values.pgwatch.postgres.create_metric_database "true" }}
           - name: PGWATCH_USER
             valueFrom:
               secretKeyRef:
@@ -57,7 +57,7 @@ spec:
           - name: PG_IS_SINK
             value: "true"
           - name: PG_RETENTION_DAYS
-            value: "{{ .Values.pgwatch.postgres.settings.retention_days }}"
+            value: "{{ .Values.pgwatch.postgres.settings.retention_days }} days"
         {{ end }}
         {{- if eq .Values.pgwatch.prometheus.enable_prom_sink "true" }}
           - name: PROM_IS_SINK
