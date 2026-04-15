@@ -76,6 +76,14 @@ spec:
           value: pgwatch_grafana
         - name: PGDATA
           value: /pgdata/data
+        {{- range $key, $value := .Values.pgwatch.postgres.env }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+        {{- with .Values.pgwatch.postgres.envFrom }}
+        envFrom:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
         volumeMounts:
         - name: pgdata
           mountPath: /pgdata

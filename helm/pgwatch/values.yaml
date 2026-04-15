@@ -26,6 +26,21 @@ pgwatch:
   securityContext:
     pod: {}
     container: {}
+  # -- Additional environment variables for the pgwatch container.
+  # Each entry is injected as a plain key/value env var.
+  # Example:
+  #   env:
+  #     PW_LOGLEVEL: "debug"
+  #     PW_WEBBASEPATH: "/pgwatch"
+  env: {}
+  # -- Inject env vars from existing ConfigMaps or Secrets.
+  # Example:
+  #   envFrom:
+  #     - configMapRef:
+  #         name: my-pgwatch-config
+  #     - secretRef:
+  #         name: my-pgwatch-secret
+  envFrom: []
   postgres:
     enable_pg_sink: "true"
     settings:
@@ -56,6 +71,17 @@ pgwatch:
         readOnlyRootFilesystem: false
         capabilities:
           drop: []            # postgres entrypoint needs capabilities
+    # -- Additional environment variables for the postgres container.
+    # Example:
+    #   env:
+    #     POSTGRES_MAX_CONNECTIONS: "200"
+    env: {}
+    # -- Inject env vars from existing ConfigMaps or Secrets.
+    # Example:
+    #   envFrom:
+    #     - secretRef:
+    #         name: my-postgres-secret
+    envFrom: []
   prometheus:
     enable_prom_sink: "true"
     # -- Component-specific overrides for the Prometheus Deployment.
@@ -66,6 +92,17 @@ pgwatch:
         runAsGroup: 65534
         fsGroup: 65534
       container: {}
+    # -- Additional environment variables for the prometheus container.
+    # Example:
+    #   env:
+    #     GOMAXPROCS: "2"
+    env: {}
+    # -- Inject env vars from existing ConfigMaps or Secrets.
+    # Example:
+    #   envFrom:
+    #     - configMapRef:
+    #         name: my-prometheus-config
+    envFrom: []
     new_prometheus:
       create_prometheus: "true"
       create_alertmanager: "false"
@@ -89,3 +126,15 @@ pgwatch:
         runAsGroup: 472
         fsGroup: 472
       container: {}
+    # -- Additional environment variables for the grafana container.
+    # Example:
+    #   env:
+    #     GF_SERVER_ROOT_URL: "https://grafana.example.com"
+    #     GF_LOG_LEVEL: "warn"
+    env: {}
+    # -- Inject env vars from existing ConfigMaps or Secrets.
+    # Example:
+    #   envFrom:
+    #     - secretRef:
+    #         name: my-grafana-secret
+    envFrom: []

@@ -65,6 +65,14 @@ spec:
             - name: GF_DATABASE_PASSWORD
               value: {{ .Values.pgwatch.postgres.use_existing_database.password }}
             {{- end }}
+            {{- range $key, $value := .Values.pgwatch.grafana.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          {{- with .Values.pgwatch.grafana.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           image: {{ .Values.pgwatch.grafana.image }}
           name: grafana
           ports:

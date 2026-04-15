@@ -49,6 +49,17 @@ spec:
           successThreshold: 1
           timeoutSeconds: 1
         name: pgwatch-prometheus
+        {{- with .Values.pgwatch.prometheus.env }}
+        env:
+        {{- range $key, $value := . }}
+          - name: {{ $key }}
+            value: {{ $value | quote }}
+        {{- end }}
+        {{- end }}
+        {{- with .Values.pgwatch.prometheus.envFrom }}
+        envFrom:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
         ports:
         - containerPort: 9090
           protocol: TCP
