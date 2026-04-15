@@ -9,7 +9,7 @@ data:
   launcher.sh: |
     #!/bin/sh
 
-    CMD="/pgwatch/pgwatch --sources=postgresql://$PGWATCH_USER:$PGWATCH_USER_PASSWORD@$METRIC_DATABASE_ENDPOINT:$METRIC_DATABASE_PORT/$METRIC_DATABASE_DATABASE?sslmode=$METRIC_DATABASE_SSLMODE"
+    CMD="/pgwatch/pgwatch"
 
     if [[ "$PG_IS_SINK" == "true" ]]; then
         CMD="$CMD --sink=postgresql://$PGWATCH_USER:$PGWATCH_USER_PASSWORD@$METRIC_DATABASE_ENDPOINT:$METRIC_DATABASE_PORT/$METRIC_DATABASE_DATABASE?sslmode=$METRIC_DATABASE_SSLMODE --retention=\"$PG_RETENTION_DAYS\""

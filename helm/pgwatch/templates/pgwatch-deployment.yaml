@@ -72,6 +72,13 @@ spec:
           - name: {{ $key }}
             value: {{ $value | quote }}
         {{- end }}
+        {{- if or .Values.pgwatch.sources.existingConfigMap .Values.pgwatch.sources.files }}
+          - name: PW_SOURCES
+            value: "/tmp/pgwatch-sources/"
+        {{- else }}
+          - name: PW_SOURCES
+            value: "postgresql://$(PGWATCH_USER):$(PGWATCH_USER_PASSWORD)@$(METRIC_DATABASE_ENDPOINT):$(METRIC_DATABASE_PORT)/$(METRIC_DATABASE_DATABASE)?sslmode=$(METRIC_DATABASE_SSLMODE)"
+        {{- end }}
         {{- with .Values.pgwatch.envFrom }}
           envFrom:
             {{- toYaml . | nindent 12 }}
@@ -81,6 +88,10 @@ spec:
           - name: launcher
             mountPath: /tmp/launcher.sh
             subPath: launcher.sh
+          {{- if or .Values.pgwatch.sources.existingConfigMap .Values.pgwatch.sources.files }}
+          - name: pgwatch-sources
+            mountPath: /tmp/pgwatch-sources
+          {{- end }}
           name: pgwatch
           ports:
             - containerPort: {{ .Values.pgwatch.webPort }}
@@ -96,4 +107,9 @@ spec:
         configMap:
           name: pgwatch-cm
           defaultMode: 0777  # Damit es direkt ausführbar ist
+      {{- if or .Values.pgwatch.sources.existingConfigMap .Values.pgwatch.sources.files }}
+      - name: pgwatch-sources
+        configMap:
+          name: {{ .Values.pgwatch.sources.existingConfigMap | default "pgwatch-sources-cm" }}
+      {{- end }}
       restartPolicy: Always

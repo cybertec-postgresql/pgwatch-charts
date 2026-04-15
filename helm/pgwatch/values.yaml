@@ -49,6 +49,28 @@ pgwatch:
   # -- Web UI listen port. Must match PW_WEBADDR (default :8080). Used for containerPort and Service.
   webPort: 8080
 
+  # -- Monitored sources: databases pgwatch should monitor (PW_SOURCES).
+  # If unset, pgwatch auto-generates a PostgreSQL URI from the metrics database settings (default).
+  # Set 'files' or 'existingConfigMap' to use file-based source configuration instead.
+  # Files are mounted at /tmp/pgwatch-sources/ and pgwatch reads every YAML file in the directory.
+  # See configs/sample-sources.yaml for the file format.
+  # Ref: https://pgwat.ch/v5.x/reference/cli_env.html#sources
+  sources:
+    # -- Named YAML source files to create inside the pod.
+    # Each key is the filename; the value is the raw YAML content.
+    # To load from disk at install time: --set-file pgwatch.sources.files.sources\\.yaml=./my-sources.yaml
+    # Example:
+    #   files:
+    #     my-databases.yaml: |
+    #       - name: "prod-db"
+    #         conn_str: "postgresql://pgwatch:pgwatchadmin@host:5432/mydb?sslmode=disable"
+    #         preset_metrics: "exhaustive"
+    #         is_enabled: true
+    files: {}
+    # -- Name of an existing ConfigMap containing source YAML file(s).
+    # When set, 'files' is ignored and the existing ConfigMap is mounted directly.
+    existingConfigMap: ""
+
   # -- Ingress resource for the pgwatch web UI.
   ingress:
     enabled: false
