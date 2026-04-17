@@ -51,25 +51,26 @@ pgwatch:
 
   # -- Monitored sources: databases pgwatch should monitor (PW_SOURCES).
   # If unset, pgwatch auto-generates a PostgreSQL URI from the metrics database settings (default).
-  # Set 'files' or 'existingConfigMap' to use file-based source configuration instead.
-  # Files are mounted at /tmp/pgwatch-sources/ and pgwatch reads every YAML file in the directory.
+  # Set 'file' to use file-based source configuration instead.
+  # The file is mounted at /tmp/pgwatch-sources/sources.yaml and pgwatch reads it directly.
+  # NOTE: Only a single file is supported. Providing a directory or multiple files as PW_SOURCES
+  # does not work in Kubernetes for now due to
+  # https://github.com/cybertec-postgresql/pgwatch/issues/1368
   # See configs/sample-sources.yaml for the file format.
   # Ref: https://pgwat.ch/v5.x/reference/cli_env.html#sources
   sources:
-    # -- Named YAML source files to create inside the pod.
-    # Each key is the filename; the value is the raw YAML content.
-    # To load from disk at install time: --set-file pgwatch.sources.files.sources\\.yaml=./my-sources.yaml
+    # -- A single YAML source file to create inside the pod.
+    # The value is the raw YAML content of the sources file.
+    # To load from disk at install time: --set-file pgwatch.sources.file=./my-sources.yaml
     # Example:
-    #   files:
-    #     my-databases.yaml: |
-    #       - name: "prod-db"
-    #         conn_str: "postgresql://pgwatch:pgwatchadmin@host:5432/mydb?sslmode=disable"
-    #         preset_metrics: "exhaustive"
-    #         is_enabled: true
-    files: {}
-    # -- Name of an existing ConfigMap containing source YAML file(s).
-    # When set, 'files' is ignored and the existing ConfigMap is mounted directly.
-    existingConfigMap: ""
+    #   file: |
+    #     - name: "prod-db"
+    #       conn_str: "postgresql://pgwatch:pgwatchadmin@host:5432/mydb?sslmode=disable"
+    #       preset_metrics: "exhaustive"
+    #       is_enabled: true
+    file: ""
+    # TODO: Implement existingConfigMap - mount an existing user-managed ConfigMap
+    # directly instead of creating one from 'file'.
 
   # -- Ingress resource for the pgwatch web UI.
   ingress:
