@@ -105,3 +105,43 @@ grafana:
 ```
 
 > When `useSubchart: false` (default), the built-in Grafana Deployment is used and the `pgwatch.grafana.*` component settings apply instead.
+
+---
+
+## Local development (Minikube)
+
+The `postgres` and `timescaledb` images are designed to start as root, set up the data directory, and then drop to the postgres user (uid 999). The chart defaults leave the security context empty so clusters that properly apply `fsGroup` volume ownership can run those images as non-root.
+
+On **Minikube**, `fsGroup` may not be applied before the container starts, causing a `Permission denied` error when the image tries to create the data directory. Override the security context in your values file to let the images handle their own permissions:
+
+```yaml
+# pgwatch.postgres
+pgwatch:
+  postgres:
+    securityContext:
+      pod:
+        runAsUser: 0
+        runAsGroup: 0
+        fsGroup: 999
+        runAsNonRoot: false
+      container:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+        capabilities:
+          drop: []
+
+# timescaledb subchart (when timescaledb.enabled: true)
+timescaledb:
+  podSecurityContext:
+    runAsUser: 0
+    runAsGroup: 0
+    fsGroup: 999
+  containerSecurityContext:
+    runAsUser: 0
+    runAsGroup: 0
+    runAsNonRoot: false
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    capabilities:
+      drop: []
+```

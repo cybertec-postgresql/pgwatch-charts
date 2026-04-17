@@ -148,16 +148,8 @@ pgwatch:
 
     # -- Component-specific overrides for the PostgreSQL StatefulSet.
     securityContext:
-      pod:
-        runAsUser: 0          # Image starts as root, later drops to postgres (999)
-        runAsGroup: 0
-        fsGroup: 999          # Volume files accessible by GID 999 (postgres group)
-        runAsNonRoot: false   # Override global runAsNonRoot: true # TODO: Check if there is a better alternative
-      container:
-        allowPrivilegeEscalation: false
-        readOnlyRootFilesystem: false
-        capabilities:
-          drop: []            # postgres entrypoint needs capabilities
+      pod: {}
+      container: {}
 
     # -- Additional environment variables for the postgres container.
     # Example:
