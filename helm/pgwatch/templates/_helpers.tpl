@@ -83,8 +83,9 @@ pgwatch.dbHost
   Returns the hostname of the metrics database service.
 
   Behavior:
-    - timescaledb.enabled true  -> "<release-name>-timescaledb"  (subchart service)
-    - timescaledb.enabled false -> "postgres-svc"                 (built-in StatefulSet)
+    - timescaledb.enabled true           -> "<release-name>-timescaledb"                   (subchart service)
+    - use_existing_database configured   -> use_existing_database.endpoint                 (external instance)
+    - otherwise                          -> "postgres-svc"                                 (built-in StatefulSet)
 
   Usage:
     {{ include "pgwatch.dbHost" . }}
@@ -92,6 +93,8 @@ pgwatch.dbHost
 {{- define "pgwatch.dbHost" -}}
 {{- if .Values.timescaledb.enabled -}}
 {{ .Release.Name }}-timescaledb
+{{- else if .Values.pgwatch.postgres.use_existing_database -}}
+{{ .Values.pgwatch.postgres.use_existing_database.endpoint }}
 {{- else -}}
 postgres-svc
 {{- end -}}
