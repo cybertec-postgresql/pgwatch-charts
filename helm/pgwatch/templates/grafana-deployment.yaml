@@ -60,8 +60,10 @@ spec:
               value: postgres
             - name: GF_DATABASE_HOST
               value: {{ .Values.pgwatch.postgres.use_existing_database.endpoint }}
+              # TODO: Port?
+              # value: "{{ .Values.pgwatch.postgres.use_existing_database.endpoint }}:{{ .Values.pgwatch.postgres.use_existing_database.port }}"
             - name: GF_DATABASE_NAME
-              value: {{ .Values.pgwatch.postgres.use_existing_database.database }}
+              value: {{ .Values.pgwatch.postgres.use_existing_database.grafana_database | default "pgwatch_grafana" }}
             - name: GF_DATABASE_SSL_MODE
               value: {{ .Values.pgwatch.postgres.use_existing_database.sslmode }}
             - name: GF_DATABASE_USER
