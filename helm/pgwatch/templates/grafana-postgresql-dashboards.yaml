@@ -7,8 +7,15 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grafana-postgresql-dashboard-{{ $name }}
+  {{- if $.Values.pgwatch.grafana.useSubchart }}
+  annotations:
+    # Used by the k8s-sidecar (pgwatch.grafana.useSubchart: true) to place
+    # dashboards under /tmp/dashboards/postgresql/, matching default_home_dashboard_path.
+    # Harmless when useSubchart: false — no sidecar is running in that mode.
+    grafana_dashboard_folder: "postgresql"
+  {{- end }}
   labels:
-    application: pgwatch    
+    application: pgwatch
     vendor: opensource.cybertec
     grafana_dashboard: "1"
 data:

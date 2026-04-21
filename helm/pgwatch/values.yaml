@@ -287,6 +287,11 @@ grafana:
       enabled: true
       # -- Label key used to identify dashboard ConfigMaps.
       label: grafana_dashboard
+      # -- Annotation key on dashboard ConfigMaps that determines the target
+      # subdirectory on disk (e.g. "postgresql" -> /tmp/dashboards/postgresql/).
+      # Must match the grafana_dashboard_folder annotation used in the dashboard
+      # ConfigMap templates (grafana-postgresql-dashboards.yaml, grafana-prometheus-dashboards.yaml).
+      folderAnnotation: grafana_dashboard_folder
     datasources:
       enabled: true
       # -- Label key used to identify datasource ConfigMaps.
