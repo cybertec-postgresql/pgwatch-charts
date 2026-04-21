@@ -33,7 +33,7 @@ spec:
             - name: GF_AUTH_ANONYMOUS_ORG_ROLE
               value: Admin
             - name: GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH
-              value: /var/lib/grafana/dashboards/1-global-db-overview.json
+              value: /var/lib/grafana/dashboards/postgresql/1-global-db-overview.json
           #  - name: GF_INSTALL_PLUGINS
           #    value: marcusolsson-treemap-panel
             {{- if eq .Values.pgwatch.postgres.create_metric_database "true" }}
