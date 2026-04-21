@@ -148,7 +148,12 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   annotations:
-    use-subpath: "true"
+    # Custom Deployment (useSubchart: false): mounted via subPath into
+    #   /etc/grafana/provisioning/datasources/pg_ds.yml
+    #   Check volumeMounts for the deployment.
+    #
+    # Grafana subchart (useSubchart: true): picked up by the k8s-sidecar
+    #   via the grafana_datasource: "1" label below.
   labels:
     application: pgwatch
     {{- if .Values.pgwatch.grafana.useSubchart }}
