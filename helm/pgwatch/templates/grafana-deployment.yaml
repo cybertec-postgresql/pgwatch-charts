@@ -166,7 +166,7 @@ data:
   postgres_datasource.yml: |
     apiVersion: 1
     datasources:
-  {{- if eq .Values.pgwatch.postgres.enable_pg_sink "true" }}
+  {{- if eq .Values.pgwatch.grafana.enable_datasources.postgres "true" }}
   {{- if eq .Values.pgwatch.postgres.create_metric_database "true" }}
     - name: pgwatch-metrics
       type: postgres
@@ -198,7 +198,7 @@ data:
       editable: true
   {{ end }}
   {{ end }}
-  {{- if eq .Values.pgwatch.prometheus.enable_prom_sink "true" }}
+  {{- if eq .Values.pgwatch.grafana.enable_datasources.prometheus "true" }}
     - name: PROMETHEUS
       type: prometheus
       access: proxy
@@ -211,7 +211,7 @@ data:
       basicAuthUser:
       basicAuthPassword:
       withCredentials:
-      {{- if eq .Values.pgwatch.postgres.enable_pg_sink "false" }}
+      {{- if ne .Values.pgwatch.grafana.enable_datasources.postgres "true" }}
       isDefault: true
       {{- end}}
       version: 1

@@ -1,5 +1,6 @@
 # File to configure the Alertmanager
 # This file is part of the CPO monitoring stack from CYBERTEC PostgreSQL International GmbH.
+{{- if eq .Values.pgwatch.prometheus.new_prometheus.create_prometheus "true" }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -23,3 +24,4 @@ data:
           severity_num: 400
         annotations:
           summary: '{{ "{{" }} $labels.instance {{ "}}" }}: Instance: {{ "{{" }} $labels.dbname {{ "}}" }} seems to be down. PGWatch is not able to communicate with the Instance.'
+{{- end }}

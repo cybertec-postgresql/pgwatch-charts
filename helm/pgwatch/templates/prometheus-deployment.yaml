@@ -7,6 +7,7 @@ metadata:
     vendor: opensource.cybertec
     postgres-operator.cybertec.at/stack: pgwatch
   name: pgwatch-prometheus
+  namespace: {{ .Release.Namespace }}
 spec:
   selector:
     matchLabels:
@@ -14,7 +15,6 @@ spec:
       name: pgwatch-prometheus
   template:
     metadata:
-      creationTimestamp: null
       labels:
         postgres-operator.cybertec.at/stack: pgwatch
         name: pgwatch-prometheus

@@ -42,10 +42,6 @@ pgwatch:
   # == Core Settings ==
 
   image: "docker.io/cybertecpostgresql/pgwatch:latest"
-  # TODO: namespace is probably dead code, templates all use {{ .Release.Namespace }}
-  #       which has advantages over using hardcoded namespace.
-  #       Remove it after double checking.
-  namespace: pgwatch
   # -- Web UI listen port. Must match PW_WEBADDR (default :8080). Used for containerPort and Service.
   webPort: 8080
 
@@ -172,7 +168,6 @@ pgwatch:
     # -- New Prometheus instance — active when create_prometheus: "true".
     new_prometheus:
       create_prometheus: "true"
-      create_alertmanager: "false"
       image: "prom/prometheus:main"
       settings:
         retention_days: 31
@@ -220,9 +215,12 @@ pgwatch:
     useSubchart: false
     image: grafana/grafana:12.4.0-21419697389 # Dashboards are prepared for grafana v12
     enable_grafana: "true"
+    # -- Controls which Grafana datasources are provisioned.
+    # Independent of the sink settings (enable_pg_sink / enable_prom_sink), which control
+    # what pgwatch writes to. These control what Grafana is configured to query.
     enable_datasources:
       postgres: "true"
-      prometheus: "false"
+      prometheus: "true"
 
     # -- Component-specific overrides for the Grafana Deployment.
     # The official Grafana image runs as UID/GID 472.

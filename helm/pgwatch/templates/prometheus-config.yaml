@@ -10,15 +10,15 @@ data:
   prometheus.yml: |
     ---
     global:
-      scrape_interval: 1m  
-      scrape_timeout: 15s  
-      evaluation_interval: 5s 
+      scrape_interval: 1m
+      scrape_timeout: 15s
+      evaluation_interval: 5s
 
     scrape_configs:
-    - job_name: 'pgwatch' 
+    - job_name: 'pgwatch'
       static_configs:
-        - targets: ['pgwatch-svc.pgwatch.svc.cluster.local:9188'] 
-    
+        - targets: ['pgwatch-svc.{{ .Release.Namespace }}.svc.cluster.local:9188']
+
     rule_files:
       - /etc/prometheus/alert-rules.d/*.yml
 {{ end }}

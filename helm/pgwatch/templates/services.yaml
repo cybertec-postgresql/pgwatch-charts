@@ -70,6 +70,7 @@ metadata:
   labels:
     application: pgwatch
   name: pgwatch-prometheus-svc
+  namespace: {{ .Release.Namespace }}
 spec:
   type: ClusterIP
   ports:
