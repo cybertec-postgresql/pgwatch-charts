@@ -55,6 +55,17 @@ spec:
                 secretKeyRef:
                   name: pgwatch-postgresql-secret-pgwatch
                   key: password
+            # Separate credentials for the pgwatch-metrics datasource.
+            - name: PGWATCH_METRICS_DS_USER
+              valueFrom:
+                secretKeyRef:
+                  name: pgwatch-postgresql-secret-pgwatch
+                  key: username
+            - name: PGWATCH_METRICS_DS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pgwatch-postgresql-secret-pgwatch
+                  key: password
             {{- else if .Values.pgwatch.postgres.use_existing_database }}
             - name: GF_DATABASE_TYPE
               value: postgres
@@ -172,14 +183,15 @@ data:
       type: postgres
       url: "{{ include "pgwatch.dbHost" . }}:5432"
       access: proxy
-      password: pgwatchadmin
-      user: pgwatch
-      database: pgwatch_metrics
-      basicAuth: true
+      user: "${PGWATCH_METRICS_DS_USER}"
       isDefault: true
       jsonData:
+        database: pgwatch_metrics
         sslmode: disable
-      postgresVersion: 1700
+        # TODO: Automate setting of postgresVersion
+        postgresVersion: 1800
+      secureJsonData:
+        password: "${PGWATCH_METRICS_DS_PASSWORD}"
       version: 1
       editable: true
   {{- else if .Values.pgwatch.postgres.use_existing_database }}
@@ -187,13 +199,13 @@ data:
       type: postgres
       url: {{ .Values.pgwatch.postgres.use_existing_database.endpoint }}:{{ .Values.pgwatch.postgres.use_existing_database.port }}
       access: proxy
-      password: {{ .Values.pgwatch.postgres.use_existing_database.password }}
       user: {{ .Values.pgwatch.postgres.use_existing_database.username }}
-      database: {{ .Values.pgwatch.postgres.use_existing_database.database }}
-      basicAuth: true
       isDefault: true
       jsonData:
+        database: {{ .Values.pgwatch.postgres.use_existing_database.database }}
         sslmode: {{ .Values.pgwatch.postgres.use_existing_database.sslmode | default "disable" }}
+      secureJsonData:
+        password: {{ .Values.pgwatch.postgres.use_existing_database.password }}
       version: 1
       editable: true
   {{ end }}
