@@ -1,7 +1,5 @@
 # ==============================================================================
 # Global Settings
-# Applied chart-wide. Component-specific overrides are merged on top when
-# securityContext.enabled: true.
 # ==============================================================================
 
 # -- Global Security Context
