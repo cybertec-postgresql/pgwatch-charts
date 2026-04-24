@@ -1,6 +1,11 @@
 # pgwatch-charts
 
-Chart templates for cybertec-postgresql/pgwatch 
+Chart templates for cybertec-postgresql/pgwatch
+
+## Helm Chart
+
+The actively maintained Helm chart for pgwatch lives at [`helm/pgwatch/`](helm/pgwatch/).
+See the [Helm chart README](helm/pgwatch/README.md) for full installation and configuration documentation.
 
 ## Disclaimer
 
