@@ -1,4 +1,4 @@
-{{- if eq .Values.pgwatch.prometheus.new_prometheus.create_prometheus "true" }}
+{{- if include "pgwatch.isTrue" .Values.pgwatch.prometheus.new_prometheus.create_prometheus }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

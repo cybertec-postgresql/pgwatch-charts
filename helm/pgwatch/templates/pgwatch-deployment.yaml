@@ -21,7 +21,7 @@ spec:
       {{- include "pgwatch.podSecurityContext" (dict "global" .Values.securityContext "component" .Values.pgwatch.securityContext) | nindent 6 }}
       containers:
         - env:
-        {{- if eq .Values.pgwatch.postgres.create_metric_database "true" }}
+        {{- if include "pgwatch.isTrue" .Values.pgwatch.postgres.create_metric_database }}
           - name: PGWATCH_USER
             valueFrom:
               secretKeyRef:
@@ -54,13 +54,13 @@ spec:
           - name: METRIC_DATABASE_SSLMODE
             value: {{ .Values.pgwatch.postgres.use_existing_database.sslmode }}
         {{ end }}
-        {{- if eq .Values.pgwatch.postgres.enable_pg_sink "true" }}
+        {{- if include "pgwatch.isTrue" .Values.pgwatch.postgres.enable_pg_sink }}
           - name: PG_IS_SINK
             value: "true"
           - name: PG_RETENTION_DAYS
             value: "{{ .Values.pgwatch.postgres.settings.retention_days }} days"
         {{ end }}
-        {{- if eq .Values.pgwatch.prometheus.enable_prom_sink "true" }}
+        {{- if include "pgwatch.isTrue" .Values.pgwatch.prometheus.enable_prom_sink }}
           - name: PROM_IS_SINK
             value: "true"
         {{ end }}
@@ -96,7 +96,7 @@ spec:
           ports:
             - containerPort: {{ .Values.pgwatch.webPort }}
               protocol: TCP
-        {{- if eq .Values.pgwatch.prometheus.enable_prom_sink "true" }}
+        {{- if include "pgwatch.isTrue" .Values.pgwatch.prometheus.enable_prom_sink }}
             - containerPort: 9188
               protocol: TCP
         {{ end }}

@@ -117,22 +117,22 @@ pgwatch:
   # == Metrics sink: PostgreSQL ==
 
   postgres:
-    enable_pg_sink: "true"
+    enable_pg_sink: true
     settings:
       retention_days: 31
 
-    # -- Set to "true" to deploy a new PostgreSQL StatefulSet (default).
-    # -- Set to "false" and configure use_existing_database below to connect to an existing instance.
-    create_metric_database: "true"
+    # -- Set to true to deploy a new PostgreSQL StatefulSet (default).
+    # -- Set to false and configure use_existing_database below to connect to an existing instance.
+    create_metric_database: true
 
-    # -- New PostgreSQL instance — active when create_metric_database: "true".
+    # -- New PostgreSQL instance — active when create_metric_database: true.
     new_pg_database:
       image: "docker.io/postgres:18.3-alpine3.23"
       volume:
         size: '10Gi'
         storageClass: 'standard'
 
-    # -- Existing PostgreSQL instance — active when create_metric_database: "false".
+    # -- Existing PostgreSQL instance — active when create_metric_database: false.
     # use_existing_database:
     #   endpoint: postgresql.local
     #   port:     '5432'
@@ -161,11 +161,11 @@ pgwatch:
   # == Metrics sink: Prometheus ==
 
   prometheus:
-    enable_prom_sink: "true"
+    enable_prom_sink: true
 
-    # -- New Prometheus instance — active when create_prometheus: "true".
+    # -- New Prometheus instance — active when create_prometheus: true.
     new_prometheus:
-      create_prometheus: "true"
+      create_prometheus: true
       image: "prom/prometheus:main"
       settings:
         retention_days: 31
@@ -173,7 +173,7 @@ pgwatch:
         size: '10Gi'
         storageClass: 'standard'
 
-    # -- Existing Prometheus instance — active when create_prometheus: "false".
+    # -- Existing Prometheus instance — active when create_prometheus: false.
     #
     # TODO: Implement use_existing_prometheus
     #
@@ -212,13 +212,13 @@ pgwatch:
     # When false (default): the custom Deployment runs exactly as before.
     useSubchart: false
     image: grafana/grafana:12.4.0-21419697389 # Dashboards are prepared for grafana v12
-    enable_grafana: "true"
+    enable_grafana: true
     # -- Controls which Grafana datasources are provisioned.
     # Independent of the sink settings (enable_pg_sink / enable_prom_sink), which control
     # what pgwatch writes to. These control what Grafana is configured to query.
     enable_datasources:
-      postgres: "true"
-      prometheus: "true"
+      postgres: true
+      prometheus: true
 
     # -- Component-specific overrides for the Grafana Deployment.
     # The official Grafana image runs as UID/GID 472.

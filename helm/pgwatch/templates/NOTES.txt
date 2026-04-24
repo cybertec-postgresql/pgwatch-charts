@@ -1,0 +1,20 @@
+{{- if include "pgwatch.hasLegacyBoolValues" . }}
+WARNING:
+Detected legacy string boolean values ("true"/"false") in pgwatch chart values.
+
+This compatibility behavior is deprecated and will be removed in the next chart
+version. Please update your values files and overrides to use native YAML
+booleans instead:
+
+  true
+  false
+
+Affected settings include:
+  - pgwatch.postgres.enable_pg_sink
+  - pgwatch.postgres.create_metric_database
+  - pgwatch.prometheus.enable_prom_sink
+  - pgwatch.prometheus.new_prometheus.create_prometheus
+  - pgwatch.grafana.enable_grafana
+  - pgwatch.grafana.enable_datasources.postgres
+  - pgwatch.grafana.enable_datasources.prometheus
+{{- end }}

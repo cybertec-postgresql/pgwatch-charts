@@ -1,6 +1,6 @@
 # File to configure the Alertmanager
 # This file is part of the CPO monitoring stack from CYBERTEC PostgreSQL International GmbH.
-{{- if eq .Values.pgwatch.prometheus.new_prometheus.create_prometheus "true" }}
+{{- if include "pgwatch.isTrue" .Values.pgwatch.prometheus.new_prometheus.create_prometheus }}
 apiVersion: v1
 kind: ConfigMap
 metadata:

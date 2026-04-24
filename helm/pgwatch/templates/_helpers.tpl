@@ -99,3 +99,60 @@ pgwatch.dbHost
 postgres-svc
 {{- end -}}
 {{- end }}
+
+{{/*
+pgwatch.isTrue
+  Returns the string "true" when the input is either the native boolean true
+  or the legacy string value "true". Returns an empty string otherwise.
+
+  Usage:
+    {{- if include "pgwatch.isTrue" .Values.some.path }}
+*/}}
+{{- define "pgwatch.isTrue" -}}
+{{- $v := . -}}
+{{- if kindIs "bool" $v -}}
+  {{- if $v -}}
+true
+  {{- end -}}
+{{- else if eq (toString $v) "true" -}}
+true
+{{- end -}}
+{{- end }}
+
+{{/*
+pgwatch.isLegacyBoolString
+  Returns the string "true" when the input is a legacy string boolean
+  ("true" or "false"). Returns an empty string otherwise.
+*/}}
+{{- define "pgwatch.isLegacyBoolString" -}}
+{{- $v := . -}}
+{{- if and (kindIs "string" $v) (or (eq $v "true") (eq $v "false")) -}}
+true
+{{- end -}}
+{{- end }}
+
+{{/*
+pgwatch.hasLegacyBoolValues
+  Returns the string "true" when any supported boolean value is still passed as
+  a legacy string ("true" / "false"). Used for deprecation notices.
+*/}}
+{{- define "pgwatch.hasLegacyBoolValues" -}}
+{{- $values := list
+  .Values.pgwatch.postgres.enable_pg_sink
+  .Values.pgwatch.postgres.create_metric_database
+  .Values.pgwatch.prometheus.enable_prom_sink
+  .Values.pgwatch.prometheus.new_prometheus.create_prometheus
+  .Values.pgwatch.grafana.enable_grafana
+  .Values.pgwatch.grafana.enable_datasources.postgres
+  .Values.pgwatch.grafana.enable_datasources.prometheus
+-}}
+{{- $state := dict "hasLegacy" false -}}
+{{- range $values -}}
+  {{- if include "pgwatch.isLegacyBoolString" . -}}
+    {{- $_ := set $state "hasLegacy" true -}}
+  {{- end -}}
+{{- end -}}
+{{- if $state.hasLegacy -}}
+true
+{{- end -}}
+{{- end }}

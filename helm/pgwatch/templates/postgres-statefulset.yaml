@@ -2,7 +2,7 @@
   Skipped when timescaledb.enabled: true — the TimescaleDB subchart provides the
   database in that case and db-init-job.yaml handles schema/user bootstrapping.
 */}}
-{{- if and (eq .Values.pgwatch.postgres.create_metric_database "true") (not .Values.timescaledb.enabled) }}
+{{- if and (include "pgwatch.isTrue" .Values.pgwatch.postgres.create_metric_database) (not .Values.timescaledb.enabled) }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:

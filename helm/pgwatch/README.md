@@ -47,6 +47,10 @@ helm upgrade pgwatch -n pgwatch -f custom-values.yaml .
 
 The Helm chart currently supports PostgreSQL and Prometheus as a sink. This can be controlled via the [values](https://github.com/cybertec-postgresql/pgwatch-charts/blob/pgwatch-3-helm-chart/helm/pgwatch/values.yaml) file.
 
+Boolean options in this chart now use native YAML booleans (`true` / `false`).
+Legacy string values (`"true"` / `"false"`) are still accepted temporarily for
+compatibility, but are deprecated and will be removed in a future chart version.
+
 - PostgreSQL
   - Use an existing configuration and metric database
   - Create a new PostgreSQL instance in the same namespace

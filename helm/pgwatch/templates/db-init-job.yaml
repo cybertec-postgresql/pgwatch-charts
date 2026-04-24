@@ -20,7 +20,7 @@
     - Secret pgwatch-postgresql-secret-pgwatch  keys username / password
 ==============================================================================
 */}}
-{{- if or .Values.timescaledb.enabled (eq .Values.pgwatch.postgres.create_metric_database "true") }}
+{{- if or .Values.timescaledb.enabled (include "pgwatch.isTrue" .Values.pgwatch.postgres.create_metric_database) }}
 apiVersion: batch/v1
 kind: Job
 metadata:
