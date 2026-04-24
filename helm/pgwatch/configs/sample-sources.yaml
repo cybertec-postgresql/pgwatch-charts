@@ -32,7 +32,7 @@
 
   # -- Named metric preset to use. Common presets: "exhaustive", "standard", "basic", "minimal".
   # check `presets` in https://github.com/cybertec-postgresql/pgwatch/blob/master/internal/metrics/metrics.yaml
-  preset_metrics: "exhaustive"
+  preset_metrics: "exhaustive_no_python" # That's the minimal preset_metrics to get the default home dashboard working
 
   custom_metrics:             # if both preset and custom are specified, custom wins
   preset_metrics_standby:     # optional metrics configuration for standby / replica state, v1.8.1+
