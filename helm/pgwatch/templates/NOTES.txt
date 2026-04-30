@@ -18,3 +18,28 @@ Affected settings include:
   - pgwatch.grafana.enable_datasources.postgres
   - pgwatch.grafana.enable_datasources.prometheus
 {{- end }}
+
+{{- if include "pgwatch.hasLegacyExternalDbInlineCredentials" . }}
+WARNING:
+Detected deprecated inline external database credentials under:
+
+  pgwatch.postgres.use_existing_database.username
+  pgwatch.postgres.use_existing_database.password
+
+Please migrate to one of the new secret-backed options:
+  - pgwatch.postgres.credentials.username / password
+  - pgwatch.postgres.credentials.existingSecret
+{{- end }}
+
+{{- if or (include "pgwatch.isTrue" .Values.pgwatch.postgres.create_metric_database)
+          .Values.pgwatch.postgres.use_existing_database }}
+
+Credential Secret:
+  kubectl get secret {{ include "pgwatch.credentialSecretName" . }} -n {{ .Release.Namespace }} -o yaml
+{{- end }}
+
+{{- if and (include "pgwatch.isTrue" .Values.pgwatch.postgres.create_metric_database)
+          (not .Values.timescaledb.enabled) }}
+Postgres Admin Secret:
+  kubectl get secret {{ include "pgwatch.adminCredentialSecretName" . }} -n {{ .Release.Namespace }} -o yaml
+{{- end }}

@@ -16,8 +16,9 @@
     - TimescaleDB, existingSecret    : Secret timescaledb.auth.existingSecret  key postgres-password
     - Plain postgres                 : Secret pgwatch-postgresql-secret-postgres  key password
 
-  The pgwatch user credentials are always read from:
-    - Secret pgwatch-postgresql-secret-pgwatch  keys username / password
+  The pgwatch user credentials are sourced from:
+    - credentials.existingSecret (if set)
+    - OR Secret pgwatch-postgresql-secret-pgwatch  keys username / password (default)
 ==============================================================================
 */}}
 {{- if or .Values.timescaledb.enabled (include "pgwatch.isTrue" .Values.pgwatch.postgres.create_metric_database) }}
@@ -58,19 +59,19 @@ spec:
                   name: {{ .Values.timescaledb.auth.existingSecret | default (printf "%s-timescaledb" .Release.Name) }}
                   key: postgres-password
                   {{- else }}
-                  name: pgwatch-postgresql-secret-postgres
-                  key: password
+                  name: {{ include "pgwatch.adminCredentialSecretName" . }}
+                  key: {{ include "pgwatch.adminCredentialPasswordKey" . }}
                   {{- end }}
             - name: PGWATCH_USER
               valueFrom:
                 secretKeyRef:
-                  name: pgwatch-postgresql-secret-pgwatch
-                  key: username
+                  name: {{ include "pgwatch.credentialSecretName" . }}
+                  key: {{ include "pgwatch.credentialUsernameKey" . }}
             - name: PGWATCH_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: pgwatch-postgresql-secret-pgwatch
-                  key: password
+                  name: {{ include "pgwatch.credentialSecretName" . }}
+                  key: {{ include "pgwatch.credentialPasswordKey" . }}
           command:
             - /bin/sh
             - -c

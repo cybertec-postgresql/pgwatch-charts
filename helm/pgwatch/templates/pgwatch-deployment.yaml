@@ -21,17 +21,17 @@ spec:
       {{- include "pgwatch.podSecurityContext" (dict "global" .Values.securityContext "component" .Values.pgwatch.securityContext) | nindent 6 }}
       containers:
         - env:
-        {{- if include "pgwatch.isTrue" .Values.pgwatch.postgres.create_metric_database }}
           - name: PGWATCH_USER
             valueFrom:
               secretKeyRef:
-                name: pgwatch-postgresql-secret-pgwatch
-                key: username
+                name: {{ include "pgwatch.credentialSecretName" . }}
+                key: {{ include "pgwatch.credentialUsernameKey" . }}
           - name: PGWATCH_USER_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: pgwatch-postgresql-secret-pgwatch
-                key: password
+                name: {{ include "pgwatch.credentialSecretName" . }}
+                key: {{ include "pgwatch.credentialPasswordKey" . }}
+        {{- if include "pgwatch.isTrue" .Values.pgwatch.postgres.create_metric_database }}
           - name: METRIC_DATABASE_ENDPOINT
             value: "{{ include "pgwatch.dbHost" . }}.{{ .Release.Namespace }}.svc.cluster.local"
           - name: METRIC_DATABASE_PORT
@@ -41,10 +41,6 @@ spec:
           - name: METRIC_DATABASE_SSLMODE
             value: disable
         {{- else if .Values.pgwatch.postgres.use_existing_database }}
-          - name: PGWATCH_USER
-            value: {{ .Values.pgwatch.postgres.use_existing_database.username }}
-          - name: PGWATCH_USER_PASSWORD
-            value: {{ .Values.pgwatch.postgres.use_existing_database.password }}
           - name: METRIC_DATABASE_ENDPOINT
             value: {{ .Values.pgwatch.postgres.use_existing_database.endpoint }}
           - name: METRIC_DATABASE_PORT

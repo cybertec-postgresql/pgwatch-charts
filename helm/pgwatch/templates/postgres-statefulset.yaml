@@ -58,8 +58,8 @@ spec:
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: pgwatch-postgresql-secret-postgres
-              key: password
+              name: {{ include "pgwatch.adminCredentialSecretName" . }}
+              key: {{ include "pgwatch.adminCredentialPasswordKey" . }}
         - name: POSTGRES_USER
           value: postgres
         - name: PGDATA

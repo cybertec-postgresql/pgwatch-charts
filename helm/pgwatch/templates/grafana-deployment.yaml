@@ -48,24 +48,24 @@ spec:
             - name: GF_DATABASE_USER
               valueFrom:
                 secretKeyRef:
-                  name: pgwatch-postgresql-secret-pgwatch
-                  key: username
+                  name: {{ include "pgwatch.credentialSecretName" . }}
+                  key: {{ include "pgwatch.credentialUsernameKey" . }}
             - name: GF_DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: pgwatch-postgresql-secret-pgwatch
-                  key: password
+                  name: {{ include "pgwatch.credentialSecretName" . }}
+                  key: {{ include "pgwatch.credentialPasswordKey" . }}
             # Separate credentials for the pgwatch-metrics datasource.
             - name: PGWATCH_METRICS_DS_USER
               valueFrom:
                 secretKeyRef:
-                  name: pgwatch-postgresql-secret-pgwatch
-                  key: username
+                  name: {{ include "pgwatch.credentialSecretName" . }}
+                  key: {{ include "pgwatch.credentialUsernameKey" . }}
             - name: PGWATCH_METRICS_DS_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: pgwatch-postgresql-secret-pgwatch
-                  key: password
+                  name: {{ include "pgwatch.credentialSecretName" . }}
+                  key: {{ include "pgwatch.credentialPasswordKey" . }}
             {{- else if .Values.pgwatch.postgres.use_existing_database }}
             - name: GF_DATABASE_TYPE
               value: postgres
@@ -78,9 +78,25 @@ spec:
             - name: GF_DATABASE_SSL_MODE
               value: {{ .Values.pgwatch.postgres.use_existing_database.sslmode }}
             - name: GF_DATABASE_USER
-              value: {{ .Values.pgwatch.postgres.use_existing_database.username }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "pgwatch.credentialSecretName" . }}
+                  key: {{ include "pgwatch.credentialUsernameKey" . }}
             - name: GF_DATABASE_PASSWORD
-              value: {{ .Values.pgwatch.postgres.use_existing_database.password }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "pgwatch.credentialSecretName" . }}
+                  key: {{ include "pgwatch.credentialPasswordKey" . }}
+            - name: PGWATCH_METRICS_DS_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "pgwatch.credentialSecretName" . }}
+                  key: {{ include "pgwatch.credentialUsernameKey" . }}
+            - name: PGWATCH_METRICS_DS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "pgwatch.credentialSecretName" . }}
+                  key: {{ include "pgwatch.credentialPasswordKey" . }}
             {{- end }}
             {{- range $key, $value := .Values.pgwatch.grafana.env }}
             - name: {{ $key }}
@@ -199,13 +215,13 @@ data:
       type: postgres
       url: {{ .Values.pgwatch.postgres.use_existing_database.endpoint }}:{{ .Values.pgwatch.postgres.use_existing_database.port }}
       access: proxy
-      user: {{ .Values.pgwatch.postgres.use_existing_database.username }}
+      user: "${PGWATCH_METRICS_DS_USER}"
       isDefault: true
       jsonData:
         database: {{ .Values.pgwatch.postgres.use_existing_database.database }}
         sslmode: {{ .Values.pgwatch.postgres.use_existing_database.sslmode | default "disable" }}
       secureJsonData:
-        password: {{ .Values.pgwatch.postgres.use_existing_database.password }}
+        password: "${PGWATCH_METRICS_DS_PASSWORD}"
       version: 1
       editable: true
   {{ end }}
