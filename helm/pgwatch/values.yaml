@@ -45,26 +45,23 @@ pgwatch:
 
   # -- Monitored sources: databases pgwatch should monitor (PW_SOURCES).
   # If unset, pgwatch auto-generates a PostgreSQL URI from the metrics database settings (default).
-  # Set 'file' to use file-based source configuration instead.
-  # The file is mounted at /tmp/pgwatch-sources/sources.yaml and pgwatch reads it directly.
-  # NOTE: Only a single file is supported. Providing a directory or multiple files as PW_SOURCES
-  # does not work in Kubernetes for now due to
-  # https://github.com/cybertec-postgresql/pgwatch/issues/1368
+  # Set 'files' to use file-based source configuration instead.
+  # Source files are mounted under /tmp/pgwatch-sources and pgwatch reads the directory.
+  # This supports multiple source files; pgwatch v5 images including the fix for
+  # https://github.com/cybertec-postgresql/pgwatch/issues/1368 skip Kubernetes
+  # ConfigMap atomic-writer internals while walking the directory.
   # See configs/sample-sources.yaml for the file format.
   # Ref: https://pgwat.ch/v5.x/reference/cli_env.html#sources
   sources:
-    # -- A single YAML source file to create inside the pod.
-    # The value is the raw YAML content of the sources file.
-    # To load from disk at install time: --set-file pgwatch.sources.file=./my-sources.yaml
-    # Example:
-    #   file: |
-    #     - name: "prod-db"
-    #       conn_str: "postgresql://pgwatch:pgwatchadmin@host:5432/mydb?sslmode=disable"
-    #       preset_metrics: "exhaustive"
-    #       is_enabled: true
-    file: ""
+    # -- Multiple YAML source files to create inside the pod.
+    # Keys become filenames in /tmp/pgwatch-sources and values are raw YAML contents.
+    # For a single source file, provide one entry in this map.
+    # Escape dots in filenames when using --set-file, for example:
+    #   --set-file pgwatch.sources.files.custom-sources\.yaml=./custom-sources.yaml
+    #   --set-file pgwatch.sources.files.custom-sources2\.yml=./custom-sources2.yml
+    files: {}
     # TODO: Implement existingConfigMap - mount an existing user-managed ConfigMap
-    # directly instead of creating one from 'file'.
+    # directly instead of creating one from 'files'.
 
   # -- Ingress resource for the pgwatch web UI.
   ingress:

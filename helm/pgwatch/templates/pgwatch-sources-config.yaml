@@ -1,9 +1,9 @@
 {{/*
   pgwatch-sources-config.yaml
-  Creates a ConfigMap containing the user-supplied source YAML file.
-  Only rendered when pgwatch.sources.file is non-empty.
+  Creates a ConfigMap containing user-supplied source YAML files.
+  Rendered when pgwatch.sources.files is non-empty.
 */}}
-{{- if .Values.pgwatch.sources.file }}
+{{- if .Values.pgwatch.sources.files }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -13,6 +13,8 @@ metadata:
   name: pgwatch-sources-cm
   namespace: {{ .Release.Namespace }}
 data:
-  sources.yaml: |
-{{ .Values.pgwatch.sources.file | indent 4 }}
+{{- range $name, $content := .Values.pgwatch.sources.files }}
+  {{ $name | quote }}: |
+{{ $content | indent 4 }}
+{{- end }}
 {{- end }}
