@@ -122,9 +122,7 @@ pgwatch:
       retention_days: 31
 
     # -- Set to true to deploy a new PostgreSQL StatefulSet (default).
-    # -- Set to false and configure use_existing_database below to connect to an existing instance.
     create_metric_database: true
-
     # -- New PostgreSQL instance — active when create_metric_database: true.
     new_pg_database:
       image: "docker.io/postgres:18.3-alpine3.23"
@@ -132,14 +130,44 @@ pgwatch:
         size: '10Gi'
         storageClass: 'standard'
 
-    # -- Existing PostgreSQL instance — active when create_metric_database: false.
+    # -- External database connection (active when create_metric_database: false).
+    # Set credentials via credentials.* below; username/password here are deprecated.
     # use_existing_database:
     #   endpoint: postgresql.local
     #   port:     '5432'
     #   database: PGWATCH_DATABASE
     #   sslmode:  require
-    #   username: pgwatch_user
-    #   password: PASSWORD_FOR_PGWATCH_USER
+    #   # username: # DEPRECATED, use credentials.username
+    #   # password: # DEPRECATED, use credentials.password
+
+    # -- Credentials for pgwatch and Grafana to connect to the metrics database.
+    #
+    # Precedence:
+    #   1. credentials.existingSecret — chart creates no Secret; keys read via usernameKey/passwordKey
+    #   2. credentials.username / password — chart creates pgwatch-postgresql-secret-pgwatch
+    #   3. DEPRECATED: use_existing_database.username / password — still works, emits warning
+    credentials:
+      # -- Name of an existing Secret that contains the pgwatch username/password.
+      # When set, the chart will not create pgwatch-postgresql-secret-pgwatch.
+      existingSecret: ""
+      username: "pgwatch"
+      password: ""
+      # -- Secret key containing the username when existingSecret is used.
+      usernameKey: "username"
+      # -- Secret key containing the password when existingSecret is used.
+      passwordKey: "password"
+
+    # -- Admin password for the built-in PostgreSQL StatefulSet.
+    # Only applies when create_metric_database: true and timescaledb.enabled: false.
+    # Has no effect for external databases or TimescaleDB subchart.
+    adminCredentials:
+      # -- Password for the postgres superuser stored in the admin Secret.
+      password: ""
+      # -- Name of an existing Secret that contains the postgres admin password.
+      # When set, the chart will not create pgwatch-postgresql-secret-postgres.
+      existingSecret: ""
+      # -- Secret key containing the postgres admin password.
+      passwordKey: "password"
 
     # -- Component-specific overrides for the PostgreSQL StatefulSet.
     securityContext:
@@ -298,3 +326,9 @@ grafana:
       org_role: Admin
     dashboards:
       default_home_dashboard_path: /tmp/dashboards/postgresql/1-global-db-overview.json
+  # -- Optional env vars injected into the Grafana subchart main container.
+  # When pgwatch.grafana.useSubchart=true and datasource credentials come from an
+  # existing Secret with custom keys, mirror those keys here via envValueFrom so
+  # Grafana can resolve ${PGWATCH_METRICS_DS_USER} / ${PGWATCH_METRICS_DS_PASSWORD}
+  # placeholders from the datasource ConfigMap.
+  envValueFrom: {}

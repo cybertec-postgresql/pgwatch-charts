@@ -56,13 +56,119 @@ compatibility, but are deprecated and will be removed in a future chart version.
   - Create a new PostgreSQL instance in the same namespace
   - Optionally replace with **TimescaleDB** (see [Helm Dependencies](#helm-dependencies))
 - Prometheus
-  - Use an existing Prometheus as sink (enables sink on port 9188)
   - Create a new Prometheus instance in the same namespace
+  - External Prometheus support: planned (not yet implemented)
 - Grafana
   - Deploy Grafana with dashboards for both PostgreSQL and Prometheus sinks
   - Optionally use the official Grafana Helm subchart (see [Helm Dependencies](#helm-dependencies))
 
 ## Advanced Customisation
+
+### Credential Management
+
+[Issue #12](https://github.com/cybertec-postgresql/pgwatch-charts/issues/12) changed credential handling to use Kubernetes Secrets instead of
+hardcoded values or plaintext in manifests.
+
+**Deprecation:** `use_existing_database.username/password` still work but will emit warnings. They will be removed in a future chart version.
+
+#### Precedence
+
+For the pgwatch application / Grafana DB user credentials under
+`pgwatch.postgres.credentials` the chart uses this order:
+
+1. `credentials.existingSecret` — chart creates no Secret
+2. `credentials.username` / `credentials.password` — chart creates Secret
+3. DEPRECATED: `use_existing_database.username` / `password` — fallback, emits warning
+
+#### Generated Secrets
+
+When not using `existingSecret`, the chart creates these default Secrets from the provided values:
+
+- **`pgwatch-postgresql-secret-pgwatch`** — application user credentials (username, password)
+  - Used by db-init-job, pgwatch, and Grafana to connect to the metrics database
+- **`pgwatch-postgresql-secret-postgres`** — admin credentials (username: postgres, password)
+  - Only created for built-in PostgreSQL (not for TimescaleDB or external databases)
+
+#### 1. Built-in PostgreSQL
+
+```yaml
+pgwatch:
+  postgres:
+    create_metric_database: true
+    credentials:
+      username: pgwatch
+      password: change-me-app
+    adminCredentials:
+      password: change-me-admin  # ignored for TimescaleDB/external
+```
+
+#### 2. External PostgreSQL
+
+```yaml
+pgwatch:
+  postgres:
+    create_metric_database: false
+    use_existing_database:
+      endpoint: postgresql.local
+      port: "5432"
+      database: pgwatch_metrics
+      sslmode: require
+    credentials:
+      username: pgwatch_user
+      password: change-me
+```
+
+#### 3. External PostgreSQL with existing Secret
+
+```yaml
+pgwatch:
+  postgres:
+    create_metric_database: false
+    use_existing_database:
+      endpoint: postgresql.local
+      port: "5432"
+      database: pgwatch_metrics
+      sslmode: require
+    credentials:
+      existingSecret: pgwatch-external-db
+      usernameKey: username
+      passwordKey: password
+```
+
+#### Migrating from deprecated inline credentials
+
+Before (deprecated, still works with warning):
+
+```yaml
+pgwatch:
+  postgres:
+    use_existing_database:
+      endpoint: postgresql.local
+      username: pgwatch_user   # deprecated
+      password: change-me      # deprecated
+```
+
+After:
+
+```yaml
+pgwatch:
+  postgres:
+    use_existing_database:
+      endpoint: postgresql.local
+    credentials:
+      username: pgwatch_user
+      password: change-me
+```
+
+#### Grafana subchart note
+
+When `pgwatch.grafana.useSubchart=true`, the datasource ConfigMap still uses
+`${PGWATCH_METRICS_DS_USER}` / `${PGWATCH_METRICS_DS_PASSWORD}` placeholders.
+If you use a pre-existing Secret with custom key names, mirror those values
+into the Grafana subchart via top-level `grafana.envValueFrom` so the Grafana
+container can resolve the placeholders.
+
+### Environment Variables and Config Injection
 
 Every component (`pgwatch`, `postgres`, `prometheus`, `grafana`) exposes two additional extension points:
 
@@ -86,7 +192,9 @@ Every component (`pgwatch`, `postgres`, `prometheus`, `grafana`) exposes two add
           name: my-pgwatch-secret
   ```
 
-**Security contexts** can be tuned at two levels:
+### Security Contexts
+
+Security contexts can be tuned at two levels:
 
 - **Global baseline** (`securityContext.enabled: true`) - applies a shared pod- and container-level security context to all components. Per-component values are merged on top and always win.
 - **Per-component overrides** - each component exposes its own `securityContext.pod` / `securityContext.container` keys, applied independently when the global baseline is disabled (the default).
@@ -108,9 +216,11 @@ Every component (`pgwatch`, `postgres`, `prometheus`, `grafana`) exposes two add
         allowPrivilegeEscalation: false
   ```
 
-> See the [Local development (Minikube)](#local-development-minikube) section for a concrete example of overriding security contexts when `fsGroup` is not applied by the cluster.
+> See the [Local Development (Minikube)](#local-development-minikube) section for a concrete example of overriding security contexts when `fsGroup` is not applied by the cluster.
 
-**`extraDeploy`** allows you to deploy arbitrary Kubernetes resources alongside the chart (e.g. `ServiceMonitor`, additional `ConfigMap`, CRDs). Each entry is rendered via `tpl`, so Helm template expressions are supported.
+### Extra Resources
+
+`extraDeploy` allows you to deploy arbitrary Kubernetes resources alongside the chart (e.g. `ServiceMonitor`, additional `ConfigMap`, CRDs). Each entry is rendered via `tpl`, so Helm template expressions are supported.
 
 > !! No validation is performed on `extraDeploy` entries. Users are responsible for the correctness of the resources they provide.
 
@@ -138,6 +248,8 @@ Both subcharts are **opt-in** and disabled by default. Run `helm dependency upda
 
 Replaces the built-in PostgreSQL StatefulSet with a TimescaleDB instance.
 Chart: `cloudpirates/timescaledb` `0.10.4` - [ArtifactHub](https://artifacthub.io/packages/helm/cloudpirates-timescaledb/timescaledb)
+
+**Note:** `pgwatch.postgres.adminCredentials` has no effect when TimescaleDB is enabled. Use `timescaledb.auth.*` instead.
 
 ```yaml
 timescaledb:
@@ -182,7 +294,7 @@ grafana:
 
 ---
 
-## Local development (Minikube)
+## Local Development (Minikube)
 
 The `postgres` and `timescaledb` images are designed to start as root, set up the data directory, and then drop to the postgres user (uid 999). The chart defaults leave the security context empty so clusters that properly apply `fsGroup` volume ownership can run those images as non-root.
 

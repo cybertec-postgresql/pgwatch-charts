@@ -156,3 +156,59 @@ pgwatch.hasLegacyBoolValues
 true
 {{- end -}}
 {{- end }}
+
+{{/*
+pgwatch.credentialSecretName
+  Name of the Secret that stores the pgwatch application user credentials.
+*/}}
+{{- define "pgwatch.credentialSecretName" -}}
+{{- (.Values.pgwatch.postgres.credentials | default dict).existingSecret
+    | default "pgwatch-postgresql-secret-pgwatch" -}}
+{{- end }}
+
+{{/*
+pgwatch.credentialUsernameKey
+  Key containing the pgwatch username in the credential secret.
+*/}}
+{{- define "pgwatch.credentialUsernameKey" -}}
+{{- (.Values.pgwatch.postgres.credentials | default dict).usernameKey
+    | default "username" -}}
+{{- end }}
+
+{{/*
+pgwatch.credentialPasswordKey
+  Key containing the pgwatch password in the credential secret.
+*/}}
+{{- define "pgwatch.credentialPasswordKey" -}}
+{{- (.Values.pgwatch.postgres.credentials | default dict).passwordKey
+    | default "password" -}}
+{{- end }}
+
+{{/*
+pgwatch.adminCredentialSecretName
+  Name of the Secret that stores the built-in postgres admin credentials.
+*/}}
+{{- define "pgwatch.adminCredentialSecretName" -}}
+{{- (.Values.pgwatch.postgres.adminCredentials | default dict).existingSecret
+    | default "pgwatch-postgresql-secret-postgres" -}}
+{{- end }}
+
+{{/*
+pgwatch.adminCredentialPasswordKey
+  Key containing the built-in postgres admin password.
+*/}}
+{{- define "pgwatch.adminCredentialPasswordKey" -}}
+{{- (.Values.pgwatch.postgres.adminCredentials | default dict).passwordKey
+    | default "password" -}}
+{{- end }}
+
+{{/*
+pgwatch.hasLegacyExternalDbInlineCredentials
+  True when deprecated external DB username/password fields are still used.
+*/}}
+{{- define "pgwatch.hasLegacyExternalDbInlineCredentials" -}}
+{{- $existingDb := .Values.pgwatch.postgres.use_existing_database | default dict -}}
+{{- if or $existingDb.username $existingDb.password -}}
+true
+{{- end -}}
+{{- end }}
