@@ -5,6 +5,56 @@
 */}}
 
 {{/*
+pgwatch.commonLabels
+  Internal helper for chart-managed resource metadata labels.
+
+  User-facing label semantics are documented in README.md. Keep this comment
+  focused on the helper calling convention and Helm context handling.
+
+  The helper receives a dict because Helm's include function accepts only one
+  data argument. The dict carries both:
+    - root:      the original chart root context, so the helper can access
+                 .Release.Name and .Release.Service even when called from
+                 inside a range/with block where the local dot (.) changed
+    - component: the logical component/role to render in
+                 app.kubernetes.io/component
+
+  Inputs:
+    - root:      the chart root context (.)
+    - component: logical component/role for the resource
+
+  Usage:
+    {{- include "pgwatch.commonLabels" (dict "root" . "component" "pgwatch") | nindent 4 }}
+    {{- include "pgwatch.commonLabels" (dict "root" $ "component" "grafana") | nindent 4 }}  # inside range/with
+*/}}
+{{- define "pgwatch.commonLabels" -}}
+app.kubernetes.io/name: pgwatch
+app.kubernetes.io/instance: {{ .root.Release.Name }}
+app.kubernetes.io/component: {{ .component }}
+app.kubernetes.io/managed-by: {{ .root.Release.Service }}
+vendor: opensource.cybertec
+{{- end }}
+
+{{/*
+pgwatch.selectorLabels
+  Internal helper for the stable label subset used by pod selectors.
+
+  Use this helper only where Kubernetes matches/selects pods, such as:
+    - spec.selector.matchLabels on Deployments/StatefulSets
+    - spec.selector on Services
+
+  Keep this as a subset of pgwatch.commonLabels. The selected pod template must
+  carry these labels as well.
+
+  Inputs and calling convention match pgwatch.commonLabels.
+*/}}
+{{- define "pgwatch.selectorLabels" -}}
+app.kubernetes.io/name: pgwatch
+app.kubernetes.io/instance: {{ .root.Release.Name }}
+app.kubernetes.io/component: {{ .component }}
+{{- end }}
+
+{{/*
 pgwatch.podSecurityContext
   Renders the pod-level securityContext for a given component.
 

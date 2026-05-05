@@ -7,23 +7,20 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    application: pgwatch
-    pgwatch.pods.role: grafana
+    {{- include "pgwatch.commonLabels" (dict "root" . "component" "grafana") | nindent 4 }}
   name: grafana
   namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      application: pgwatch
-      pgwatch.pods.role: grafana
+      {{- include "pgwatch.selectorLabels" (dict "root" . "component" "grafana") | nindent 6 }}
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        application: pgwatch
-        pgwatch.pods.role: grafana
+        {{- include "pgwatch.commonLabels" (dict "root" . "component" "grafana") | nindent 8 }}
     spec:
       {{- include "pgwatch.podSecurityContext" (dict "global" .Values.securityContext "component" .Values.pgwatch.grafana.securityContext) | nindent 6 }}
       containers:
@@ -182,7 +179,7 @@ metadata:
     # Grafana subchart (useSubchart: true): picked up by the k8s-sidecar
     #   via the grafana_datasource: "1" label below.
   labels:
-    application: pgwatch
+    {{- include "pgwatch.commonLabels" (dict "root" . "component" "grafana") | nindent 4 }}
     {{- if .Values.pgwatch.grafana.useSubchart }}
     # Watched by the Grafana subchart sidecar (sidecar.datasources.label: grafana_datasource).
     grafana_datasource: "1"

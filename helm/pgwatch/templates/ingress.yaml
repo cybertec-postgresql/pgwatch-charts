@@ -27,8 +27,7 @@ metadata:
   name: pgwatch-ingress
   namespace: {{ .Release.Namespace }}
   labels:
-    application: pgwatch
-    pgwatch.pods.role: pgwatch
+    {{- include "pgwatch.commonLabels" (dict "root" . "component" "pgwatch") | nindent 4 }}
   {{- with .Values.pgwatch.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}

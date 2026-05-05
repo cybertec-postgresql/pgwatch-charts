@@ -9,8 +9,7 @@ kind: ConfigMap
 metadata:
   name: grafana-dashboard-config
   labels:
-    application: pgwatch
-    vendor: opensource.cybertec
+    {{- include "pgwatch.commonLabels" (dict "root" . "component" "grafana") | nindent 4 }}
 data:
   dashboards_provider.yml: |
     apiVersion: 1
