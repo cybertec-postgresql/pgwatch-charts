@@ -51,6 +51,26 @@ Boolean options in this chart now use native YAML booleans (`true` / `false`).
 Legacy string values (`"true"` / `"false"`) are still accepted temporarily for
 compatibility, but are deprecated and will be removed in a future chart version.
 
+Values keys follow Helm's camelCase naming convention. The former snake_case
+keys are still accepted as backward-compatible fallbacks and emit a Helm
+install/upgrade warning. Please migrate them before the next major chart
+version, where snake_case compatibility will be removed:
+
+| Deprecated snake_case | Replacement camelCase |
+|---|---|
+| `pgwatch.postgres.enable_pg_sink` | `pgwatch.postgres.enablePgSink` |
+| `pgwatch.postgres.settings.retention_days` | `pgwatch.postgres.settings.retentionDays` |
+| `pgwatch.postgres.create_metric_database` | `pgwatch.postgres.createMetricDatabase` |
+| `pgwatch.postgres.new_pg_database` | `pgwatch.postgres.newPgDatabase` |
+| `pgwatch.postgres.use_existing_database` | `pgwatch.postgres.useExistingDatabase` |
+| `pgwatch.postgres.use_existing_database.grafana_database` | `pgwatch.postgres.useExistingDatabase.grafanaDatabase` |
+| `pgwatch.prometheus.enable_prom_sink` | `pgwatch.prometheus.enablePromSink` |
+| `pgwatch.prometheus.new_prometheus` | `pgwatch.prometheus.newPrometheus` |
+| `pgwatch.prometheus.new_prometheus.create_prometheus` | `pgwatch.prometheus.newPrometheus.createPrometheus` |
+| `pgwatch.prometheus.new_prometheus.settings.retention_days` | `pgwatch.prometheus.newPrometheus.settings.retentionDays` |
+| `pgwatch.grafana.enable_grafana` | `pgwatch.grafana.enableGrafana` |
+| `pgwatch.grafana.enable_datasources` | `pgwatch.grafana.enableDatasources` |
+
 - PostgreSQL
   - Use an existing configuration and metric database
   - Create a new PostgreSQL instance in the same namespace
@@ -69,7 +89,7 @@ compatibility, but are deprecated and will be removed in a future chart version.
 [Issue #12](https://github.com/cybertec-postgresql/pgwatch-charts/issues/12) changed credential handling to use Kubernetes Secrets instead of
 hardcoded values or plaintext in manifests.
 
-**Deprecation:** `use_existing_database.username/password` still work but will emit warnings. They will be removed in a future chart version.
+**Deprecation:** `useExistingDatabase.username/password` still work but will emit warnings. They will be removed in a future chart version.
 
 #### Precedence
 
@@ -78,7 +98,7 @@ For the pgwatch application / Grafana DB user credentials under
 
 1. `credentials.existingSecret` — chart creates no Secret
 2. `credentials.username` / `credentials.password` — chart creates Secret
-3. DEPRECATED: `use_existing_database.username` / `password` — fallback, emits warning
+3. DEPRECATED: `useExistingDatabase.username` / `password` — fallback, emits warning
 
 #### Generated Secrets
 
@@ -94,7 +114,7 @@ When not using `existingSecret`, the chart creates these default Secrets from th
 ```yaml
 pgwatch:
   postgres:
-    create_metric_database: true
+    createMetricDatabase: true
     credentials:
       username: pgwatch
       password: change-me-app
@@ -107,8 +127,8 @@ pgwatch:
 ```yaml
 pgwatch:
   postgres:
-    create_metric_database: false
-    use_existing_database:
+    createMetricDatabase: false
+    useExistingDatabase:
       endpoint: postgresql.local
       port: "5432"
       database: pgwatch_metrics
@@ -123,8 +143,8 @@ pgwatch:
 ```yaml
 pgwatch:
   postgres:
-    create_metric_database: false
-    use_existing_database:
+    createMetricDatabase: false
+    useExistingDatabase:
       endpoint: postgresql.local
       port: "5432"
       database: pgwatch_metrics
@@ -142,7 +162,7 @@ Before (deprecated, still works with warning):
 ```yaml
 pgwatch:
   postgres:
-    use_existing_database:
+    useExistingDatabase:
       endpoint: postgresql.local
       username: pgwatch_user   # deprecated
       password: change-me      # deprecated
@@ -153,7 +173,7 @@ After:
 ```yaml
 pgwatch:
   postgres:
-    use_existing_database:
+    useExistingDatabase:
       endpoint: postgresql.local
     credentials:
       username: pgwatch_user

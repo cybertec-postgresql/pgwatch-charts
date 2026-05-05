@@ -1,4 +1,4 @@
-{{- if include "pgwatch.isTrue" .Values.pgwatch.postgres.enable_pg_sink }}
+{{- if include "pgwatch.isTrue" (include "pgwatch.postgres.enablePgSink" .) }}
 {{- range $path, $_ := .Files.Glob "dashboards/postgresql/*.json" }}
 {{- $filename := base $path }}
 {{- $name := $filename | lower | replace "." "-" | replace "_" "-" }}

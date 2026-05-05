@@ -31,7 +31,7 @@ spec:
               secretKeyRef:
                 name: {{ include "pgwatch.credentialSecretName" . }}
                 key: {{ include "pgwatch.credentialPasswordKey" . }}
-        {{- if include "pgwatch.isTrue" .Values.pgwatch.postgres.create_metric_database }}
+        {{- if include "pgwatch.isTrue" (include "pgwatch.postgres.createMetricDatabase" .) }}
           - name: METRIC_DATABASE_ENDPOINT
             value: "{{ include "pgwatch.dbHost" . }}.{{ .Release.Namespace }}.svc.cluster.local"
           - name: METRIC_DATABASE_PORT
@@ -40,23 +40,23 @@ spec:
             value: pgwatch_metrics
           - name: METRIC_DATABASE_SSLMODE
             value: disable
-        {{- else if .Values.pgwatch.postgres.use_existing_database }}
+        {{- else if (include "pgwatch.postgres.hasUseExistingDatabase" .) }}
           - name: METRIC_DATABASE_ENDPOINT
-            value: {{ .Values.pgwatch.postgres.use_existing_database.endpoint }}
+            value: {{ (include "pgwatch.postgres.useExistingDatabase.endpoint" .) }}
           - name: METRIC_DATABASE_PORT
-            value: "{{ .Values.pgwatch.postgres.use_existing_database.port }}"
+            value: "{{ (include "pgwatch.postgres.useExistingDatabase.port" .) }}"
           - name: METRIC_DATABASE_DATABASE
-            value: {{ .Values.pgwatch.postgres.use_existing_database.database }}
+            value: {{ (include "pgwatch.postgres.useExistingDatabase.database" .) }}
           - name: METRIC_DATABASE_SSLMODE
-            value: {{ .Values.pgwatch.postgres.use_existing_database.sslmode }}
+            value: {{ (include "pgwatch.postgres.useExistingDatabase.sslmode" .) }}
         {{ end }}
-        {{- if include "pgwatch.isTrue" .Values.pgwatch.postgres.enable_pg_sink }}
+        {{- if include "pgwatch.isTrue" (include "pgwatch.postgres.enablePgSink" .) }}
           - name: PG_IS_SINK
             value: "true"
           - name: PG_RETENTION_DAYS
-            value: "{{ .Values.pgwatch.postgres.settings.retention_days }} days"
+            value: "{{ (include "pgwatch.postgres.settings.retentionDays" .) }} days"
         {{ end }}
-        {{- if include "pgwatch.isTrue" .Values.pgwatch.prometheus.enable_prom_sink }}
+        {{- if include "pgwatch.isTrue" (include "pgwatch.prometheus.enablePromSink" .) }}
           - name: PROM_IS_SINK
             value: "true"
         {{ end }}
@@ -92,7 +92,7 @@ spec:
           ports:
             - containerPort: {{ .Values.pgwatch.webPort }}
               protocol: TCP
-        {{- if include "pgwatch.isTrue" .Values.pgwatch.prometheus.enable_prom_sink }}
+        {{- if include "pgwatch.isTrue" (include "pgwatch.prometheus.enablePromSink" .) }}
             - containerPort: 9188
               protocol: TCP
         {{ end }}
