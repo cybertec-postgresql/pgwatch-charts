@@ -114,25 +114,26 @@ pgwatch:
   # == Metrics sink: PostgreSQL ==
 
   postgres:
-    enable_pg_sink: true
+    enablePgSink: true
     settings:
-      retention_days: 31
+      retentionDays: 31
 
     # -- Set to true to deploy a new PostgreSQL StatefulSet (default).
-    create_metric_database: true
-    # -- New PostgreSQL instance — active when create_metric_database: true.
-    new_pg_database:
+    createMetricDatabase: true
+    # -- New PostgreSQL instance — active when createMetricDatabase: true.
+    newPgDatabase:
       image: "docker.io/postgres:18.3-alpine3.23"
       volume:
         size: '10Gi'
         storageClass: 'standard'
 
-    # -- External database connection (active when create_metric_database: false).
+    # -- External database connection (active when createMetricDatabase: false).
     # Set credentials via credentials.* below; username/password here are deprecated.
-    # use_existing_database:
+    # useExistingDatabase:
     #   endpoint: postgresql.local
     #   port:     '5432'
     #   database: PGWATCH_DATABASE
+    #   grafanaDatabase: pgwatch_grafana # optional, default: pgwatch_grafana
     #   sslmode:  require
     #   # username: # DEPRECATED, use credentials.username
     #   # password: # DEPRECATED, use credentials.password
@@ -142,7 +143,7 @@ pgwatch:
     # Precedence:
     #   1. credentials.existingSecret — chart creates no Secret; keys read via usernameKey/passwordKey
     #   2. credentials.username / password — chart creates pgwatch-postgresql-secret-pgwatch
-    #   3. DEPRECATED: use_existing_database.username / password — still works, emits warning
+    #   3. DEPRECATED: useExistingDatabase.username / password — still works, emits warning
     credentials:
       # -- Name of an existing Secret that contains the pgwatch username/password.
       # When set, the chart will not create pgwatch-postgresql-secret-pgwatch.
@@ -155,7 +156,7 @@ pgwatch:
       passwordKey: "password"
 
     # -- Admin password for the built-in PostgreSQL StatefulSet.
-    # Only applies when create_metric_database: true and timescaledb.enabled: false.
+    # Only applies when createMetricDatabase: true and timescaledb.enabled: false.
     # Has no effect for external databases or TimescaleDB subchart.
     adminCredentials:
       # -- Password for the postgres superuser stored in the admin Secret.
@@ -186,19 +187,19 @@ pgwatch:
   # == Metrics sink: Prometheus ==
 
   prometheus:
-    enable_prom_sink: true
+    enablePromSink: true
 
-    # -- New Prometheus instance — active when create_prometheus: true.
-    new_prometheus:
-      create_prometheus: true
+    # -- New Prometheus instance — active when createPrometheus: true.
+    newPrometheus:
+      createPrometheus: true
       image: "prom/prometheus:main"
       settings:
-        retention_days: 31
+        retentionDays: 31
       volume:
         size: '10Gi'
         storageClass: 'standard'
 
-    # -- Existing Prometheus instance — active when create_prometheus: false.
+    # -- Existing Prometheus instance — active when createPrometheus: false.
     #
     # TODO: Implement use_existing_prometheus
     #
@@ -237,11 +238,11 @@ pgwatch:
     # When false (default): the custom Deployment runs exactly as before.
     useSubchart: false
     image: grafana/grafana:12.4.0-21419697389 # Dashboards are prepared for grafana v12
-    enable_grafana: true
+    enableGrafana: true
     # -- Controls which Grafana datasources are provisioned.
-    # Independent of the sink settings (enable_pg_sink / enable_prom_sink), which control
+    # Independent of the sink settings (enablePgSink / enablePromSink), which control
     # what pgwatch writes to. These control what Grafana is configured to query.
-    enable_datasources:
+    enableDatasources:
       postgres: true
       prometheus: true
 

@@ -9,7 +9,7 @@
 
   Rendered when:
     - timescaledb.enabled: true   (TimescaleDB subchart is the backend)
-    - OR create_metric_database: "true"  (built-in PostgreSQL StatefulSet)
+    - OR createMetricDatabase: "true"  (built-in PostgreSQL StatefulSet)
 
   Admin credentials are sourced from:
     - TimescaleDB, generated secret  : Secret <release>-timescaledb           key postgres-password
@@ -21,7 +21,7 @@
     - OR Secret pgwatch-postgresql-secret-pgwatch  keys username / password (default)
 ==============================================================================
 */}}
-{{- if or .Values.timescaledb.enabled (include "pgwatch.isTrue" .Values.pgwatch.postgres.create_metric_database) }}
+{{- if or .Values.timescaledb.enabled (include "pgwatch.isTrue" (include "pgwatch.postgres.createMetricDatabase" .)) }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -44,7 +44,7 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: db-init
-          image: {{ .Values.pgwatch.postgres.new_pg_database.image }}
+          image: {{ (include "pgwatch.postgres.newPgDatabase.image" .) }}
           env:
             - name: PGHOST
               value: {{ include "pgwatch.dbHost" . }}

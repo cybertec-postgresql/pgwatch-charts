@@ -84,7 +84,7 @@ pgwatch.dbHost
 
   Behavior:
     - timescaledb.enabled true           -> "<release-name>-timescaledb"                   (subchart service)
-    - use_existing_database configured   -> use_existing_database.endpoint                 (external instance)
+    - useExistingDatabase configured     -> useExistingDatabase.endpoint                   (external instance)
     - otherwise                          -> "postgres-svc"                                 (built-in StatefulSet)
 
   Usage:
@@ -93,11 +93,179 @@ pgwatch.dbHost
 {{- define "pgwatch.dbHost" -}}
 {{- if .Values.timescaledb.enabled -}}
 {{ .Release.Name }}-timescaledb
-{{- else if .Values.pgwatch.postgres.use_existing_database -}}
-{{ .Values.pgwatch.postgres.use_existing_database.endpoint }}
+{{- else if include "pgwatch.postgres.hasUseExistingDatabase" . -}}
+{{ include "pgwatch.postgres.useExistingDatabase.endpoint" . }}
 {{- else -}}
 postgres-svc
 {{- end -}}
+{{- end }}
+
+{{/*
+Backward-compatible value helpers for keys renamed from snake_case to camelCase.
+Legacy snake_case values take precedence when explicitly present so existing
+values files keep working until support is removed in the next major version.
+*/}}
+{{- define "pgwatch.postgres.enablePgSink" -}}
+{{- $pg := .Values.pgwatch.postgres -}}
+{{- if hasKey $pg "enable_pg_sink" -}}{{ $pg.enable_pg_sink }}{{- else -}}{{ $pg.enablePgSink }}{{- end -}}
+{{- end }}
+
+{{- define "pgwatch.postgres.createMetricDatabase" -}}
+{{- $pg := .Values.pgwatch.postgres -}}
+{{- if hasKey $pg "create_metric_database" -}}{{ $pg.create_metric_database }}{{- else -}}{{ $pg.createMetricDatabase }}{{- end -}}
+{{- end }}
+
+{{- define "pgwatch.postgres.settings.retentionDays" -}}
+{{- $settings := .Values.pgwatch.postgres.settings | default dict -}}
+{{- if hasKey $settings "retention_days" -}}{{ $settings.retention_days }}{{- else -}}{{ $settings.retentionDays }}{{- end -}}
+{{- end }}
+
+{{- define "pgwatch.postgres.newPgDatabase.image" -}}
+{{- $pg := .Values.pgwatch.postgres -}}
+{{- $db := $pg.newPgDatabase | default dict -}}
+{{- if hasKey $pg "new_pg_database" -}}
+  {{- $db = $pg.new_pg_database | default dict -}}
+{{- end -}}
+{{- $db.image -}}
+{{- end }}
+
+{{- define "pgwatch.postgres.newPgDatabase.volume.size" -}}
+{{- $pg := .Values.pgwatch.postgres -}}
+{{- $db := $pg.newPgDatabase | default dict -}}
+{{- if hasKey $pg "new_pg_database" -}}
+  {{- $db = $pg.new_pg_database | default dict -}}
+{{- end -}}
+{{- ($db.volume | default dict).size -}}
+{{- end }}
+
+{{- define "pgwatch.postgres.newPgDatabase.volume.storageClass" -}}
+{{- $pg := .Values.pgwatch.postgres -}}
+{{- $db := $pg.newPgDatabase | default dict -}}
+{{- if hasKey $pg "new_pg_database" -}}
+  {{- $db = $pg.new_pg_database | default dict -}}
+{{- end -}}
+{{- ($db.volume | default dict).storageClass -}}
+{{- end }}
+
+{{- define "pgwatch.postgres.hasUseExistingDatabase" -}}
+{{- $pg := .Values.pgwatch.postgres -}}
+{{- if or $pg.useExistingDatabase $pg.use_existing_database -}}true{{- end -}}
+{{- end }}
+
+{{- define "pgwatch.postgres.useExistingDatabase.endpoint" -}}
+{{- $pg := .Values.pgwatch.postgres -}}
+{{- $db := $pg.useExistingDatabase | default $pg.use_existing_database | default dict -}}
+{{- $db.endpoint -}}
+{{- end }}
+
+{{- define "pgwatch.postgres.useExistingDatabase.port" -}}
+{{- $pg := .Values.pgwatch.postgres -}}
+{{- $db := $pg.useExistingDatabase | default $pg.use_existing_database | default dict -}}
+{{- $db.port -}}
+{{- end }}
+
+{{- define "pgwatch.postgres.useExistingDatabase.database" -}}
+{{- $pg := .Values.pgwatch.postgres -}}
+{{- $db := $pg.useExistingDatabase | default $pg.use_existing_database | default dict -}}
+{{- $db.database -}}
+{{- end }}
+
+{{- define "pgwatch.postgres.useExistingDatabase.sslmode" -}}
+{{- $pg := .Values.pgwatch.postgres -}}
+{{- $db := $pg.useExistingDatabase | default $pg.use_existing_database | default dict -}}
+{{- $db.sslmode -}}
+{{- end }}
+
+{{- define "pgwatch.postgres.useExistingDatabase.grafanaDatabase" -}}
+{{- $pg := .Values.pgwatch.postgres -}}
+{{- $db := $pg.useExistingDatabase | default $pg.use_existing_database | default dict -}}
+{{- if hasKey $db "grafana_database" -}}{{ $db.grafana_database }}{{- else -}}{{ $db.grafanaDatabase | default "pgwatch_grafana" }}{{- end -}}
+{{- end }}
+
+{{- define "pgwatch.postgres.useExistingDatabase.username" -}}
+{{- $pg := .Values.pgwatch.postgres -}}
+{{- $db := $pg.useExistingDatabase | default $pg.use_existing_database | default dict -}}
+{{- $db.username -}}
+{{- end }}
+
+{{- define "pgwatch.postgres.useExistingDatabase.password" -}}
+{{- $pg := .Values.pgwatch.postgres -}}
+{{- $db := $pg.useExistingDatabase | default $pg.use_existing_database | default dict -}}
+{{- $db.password -}}
+{{- end }}
+
+{{- define "pgwatch.prometheus.enablePromSink" -}}
+{{- $prom := .Values.pgwatch.prometheus -}}
+{{- if hasKey $prom "enable_prom_sink" -}}{{ $prom.enable_prom_sink }}{{- else -}}{{ $prom.enablePromSink }}{{- end -}}
+{{- end }}
+
+{{- define "pgwatch.prometheus.newPrometheus.createPrometheus" -}}
+{{- $prom := .Values.pgwatch.prometheus -}}
+{{- $newProm := $prom.newPrometheus | default dict -}}
+{{- if hasKey $prom "new_prometheus" -}}
+  {{- $newProm = $prom.new_prometheus | default dict -}}
+{{- end -}}
+{{- if hasKey $newProm "create_prometheus" -}}{{ $newProm.create_prometheus }}{{- else -}}{{ $newProm.createPrometheus }}{{- end -}}
+{{- end }}
+
+{{- define "pgwatch.prometheus.newPrometheus.image" -}}
+{{- $prom := .Values.pgwatch.prometheus -}}
+{{- $newProm := $prom.newPrometheus | default dict -}}
+{{- if hasKey $prom "new_prometheus" -}}
+  {{- $newProm = $prom.new_prometheus | default dict -}}
+{{- end -}}
+{{- $newProm.image -}}
+{{- end }}
+
+{{- define "pgwatch.prometheus.newPrometheus.settings.retentionDays" -}}
+{{- $prom := .Values.pgwatch.prometheus -}}
+{{- $newProm := $prom.newPrometheus | default dict -}}
+{{- if hasKey $prom "new_prometheus" -}}
+  {{- $newProm = $prom.new_prometheus | default dict -}}
+{{- end -}}
+{{- $settings := $newProm.settings | default dict -}}
+{{- if hasKey $settings "retention_days" -}}{{ $settings.retention_days }}{{- else -}}{{ $settings.retentionDays }}{{- end -}}
+{{- end }}
+
+{{- define "pgwatch.prometheus.newPrometheus.volume.size" -}}
+{{- $prom := .Values.pgwatch.prometheus -}}
+{{- $newProm := $prom.newPrometheus | default dict -}}
+{{- if hasKey $prom "new_prometheus" -}}
+  {{- $newProm = $prom.new_prometheus | default dict -}}
+{{- end -}}
+{{- ($newProm.volume | default dict).size -}}
+{{- end }}
+
+{{- define "pgwatch.prometheus.newPrometheus.volume.storageClass" -}}
+{{- $prom := .Values.pgwatch.prometheus -}}
+{{- $newProm := $prom.newPrometheus | default dict -}}
+{{- if hasKey $prom "new_prometheus" -}}
+  {{- $newProm = $prom.new_prometheus | default dict -}}
+{{- end -}}
+{{- ($newProm.volume | default dict).storageClass -}}
+{{- end }}
+
+{{- define "pgwatch.grafana.enableGrafana" -}}
+{{- $grafana := .Values.pgwatch.grafana -}}
+{{- if hasKey $grafana "enable_grafana" -}}{{ $grafana.enable_grafana }}{{- else -}}{{ $grafana.enableGrafana }}{{- end -}}
+{{- end }}
+
+{{- define "pgwatch.grafana.enableDatasources.postgres" -}}
+{{- $grafana := .Values.pgwatch.grafana -}}
+{{- $ds := $grafana.enableDatasources | default dict -}}
+{{- if hasKey $grafana "enable_datasources" -}}
+  {{- $ds = $grafana.enable_datasources | default dict -}}
+{{- end -}}
+{{- $ds.postgres -}}
+{{- end }}
+
+{{- define "pgwatch.grafana.enableDatasources.prometheus" -}}
+{{- $grafana := .Values.pgwatch.grafana -}}
+{{- $ds := $grafana.enableDatasources | default dict -}}
+{{- if hasKey $grafana "enable_datasources" -}}
+  {{- $ds = $grafana.enable_datasources | default dict -}}
+{{- end -}}
+{{- $ds.prometheus -}}
 {{- end }}
 
 {{/*
@@ -137,15 +305,28 @@ pgwatch.hasLegacyBoolValues
   a legacy string ("true" / "false"). Used for deprecation notices.
 */}}
 {{- define "pgwatch.hasLegacyBoolValues" -}}
-{{- $values := list
-  .Values.pgwatch.postgres.enable_pg_sink
-  .Values.pgwatch.postgres.create_metric_database
-  .Values.pgwatch.prometheus.enable_prom_sink
-  .Values.pgwatch.prometheus.new_prometheus.create_prometheus
-  .Values.pgwatch.grafana.enable_grafana
-  .Values.pgwatch.grafana.enable_datasources.postgres
-  .Values.pgwatch.grafana.enable_datasources.prometheus
--}}
+{{- $pg := .Values.pgwatch.postgres -}}
+{{- $prom := .Values.pgwatch.prometheus -}}
+{{- $newProm := $prom.newPrometheus | default dict -}}
+{{- if hasKey $prom "new_prometheus" -}}
+  {{- $newProm = $prom.new_prometheus | default dict -}}
+{{- end -}}
+{{- $grafana := .Values.pgwatch.grafana -}}
+{{- $ds := $grafana.enableDatasources | default dict -}}
+{{- if hasKey $grafana "enable_datasources" -}}
+  {{- $ds = $grafana.enable_datasources | default dict -}}
+{{- end -}}
+{{- $enablePgSink := $pg.enablePgSink -}}
+{{- if hasKey $pg "enable_pg_sink" -}}{{- $enablePgSink = $pg.enable_pg_sink -}}{{- end -}}
+{{- $createMetricDatabase := $pg.createMetricDatabase -}}
+{{- if hasKey $pg "create_metric_database" -}}{{- $createMetricDatabase = $pg.create_metric_database -}}{{- end -}}
+{{- $enablePromSink := $prom.enablePromSink -}}
+{{- if hasKey $prom "enable_prom_sink" -}}{{- $enablePromSink = $prom.enable_prom_sink -}}{{- end -}}
+{{- $createPrometheus := $newProm.createPrometheus -}}
+{{- if hasKey $newProm "create_prometheus" -}}{{- $createPrometheus = $newProm.create_prometheus -}}{{- end -}}
+{{- $enableGrafana := $grafana.enableGrafana -}}
+{{- if hasKey $grafana "enable_grafana" -}}{{- $enableGrafana = $grafana.enable_grafana -}}{{- end -}}
+{{- $values := list $enablePgSink $createMetricDatabase $enablePromSink $createPrometheus $enableGrafana $ds.postgres $ds.prometheus -}}
 {{- $state := dict "hasLegacy" false -}}
 {{- range $values -}}
   {{- if include "pgwatch.isLegacyBoolString" . -}}
@@ -207,8 +388,35 @@ pgwatch.hasLegacyExternalDbInlineCredentials
   True when deprecated external DB username/password fields are still used.
 */}}
 {{- define "pgwatch.hasLegacyExternalDbInlineCredentials" -}}
-{{- $existingDb := .Values.pgwatch.postgres.use_existing_database | default dict -}}
+{{- $pg := .Values.pgwatch.postgres -}}
+{{- $existingDb := $pg.useExistingDatabase | default $pg.use_existing_database | default dict -}}
 {{- if or $existingDb.username $existingDb.password -}}
+true
+{{- end -}}
+{{- end }}
+
+{{- define "pgwatch.hasLegacyRenamedValues" -}}
+{{- $pg := .Values.pgwatch.postgres -}}
+{{- $prom := .Values.pgwatch.prometheus -}}
+{{- $newProm := $prom.new_prometheus | default dict -}}
+{{- $grafana := .Values.pgwatch.grafana -}}
+{{- $legacyDs := $grafana.enable_datasources | default dict -}}
+{{- if or
+  (hasKey $pg "enable_pg_sink")
+  (hasKey ($pg.settings | default dict) "retention_days")
+  (hasKey $pg "create_metric_database")
+  (hasKey $pg "new_pg_database")
+  (hasKey $pg "use_existing_database")
+  (hasKey ($pg.useExistingDatabase | default $pg.use_existing_database | default dict) "grafana_database")
+  (hasKey $prom "enable_prom_sink")
+  (hasKey $prom "new_prometheus")
+  (hasKey $newProm "create_prometheus")
+  (hasKey (($newProm.settings | default dict)) "retention_days")
+  (hasKey $grafana "enable_grafana")
+  (hasKey $grafana "enable_datasources")
+  (hasKey $legacyDs "postgres")
+  (hasKey $legacyDs "prometheus")
+-}}
 true
 {{- end -}}
 {{- end }}

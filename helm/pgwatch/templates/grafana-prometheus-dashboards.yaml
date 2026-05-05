@@ -1,4 +1,4 @@
-{{- if include "pgwatch.isTrue" .Values.pgwatch.prometheus.enable_prom_sink }}
+{{- if include "pgwatch.isTrue" (include "pgwatch.prometheus.enablePromSink" .) }}
 {{- range $path, $_ := .Files.Glob "dashboards/prometheus/*.json" }}
 {{- $filename := base $path }}
 {{- $name := $filename | lower | replace "." "-" | replace "_" "-" }}

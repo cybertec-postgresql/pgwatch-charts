@@ -2,7 +2,7 @@
   Skipped when pgwatch.grafana.useSubchart: true — the official Grafana subchart
   provides the Grafana instance in that case (see grafana: top-level values block).
 */}}
-{{- if and (include "pgwatch.isTrue" .Values.pgwatch.grafana.enable_grafana) (not .Values.pgwatch.grafana.useSubchart) }}
+{{- if and (include "pgwatch.isTrue" (include "pgwatch.grafana.enableGrafana" .)) (not .Values.pgwatch.grafana.useSubchart) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -36,7 +36,7 @@ spec:
               value: /var/lib/grafana/dashboards/postgresql/1-global-db-overview.json
           #  - name: GF_INSTALL_PLUGINS
           #    value: marcusolsson-treemap-panel
-            {{- if include "pgwatch.isTrue" .Values.pgwatch.postgres.create_metric_database }}
+            {{- if include "pgwatch.isTrue" (include "pgwatch.postgres.createMetricDatabase" .) }}
             - name: GF_DATABASE_TYPE
               value: postgres
             - name: GF_DATABASE_HOST
@@ -66,17 +66,17 @@ spec:
                 secretKeyRef:
                   name: {{ include "pgwatch.credentialSecretName" . }}
                   key: {{ include "pgwatch.credentialPasswordKey" . }}
-            {{- else if .Values.pgwatch.postgres.use_existing_database }}
+            {{- else if (include "pgwatch.postgres.hasUseExistingDatabase" .) }}
             - name: GF_DATABASE_TYPE
               value: postgres
             - name: GF_DATABASE_HOST
-              value: {{ .Values.pgwatch.postgres.use_existing_database.endpoint }}
+              value: {{ (include "pgwatch.postgres.useExistingDatabase.endpoint" .) }}
               # TODO: Port?
-              # value: "{{ .Values.pgwatch.postgres.use_existing_database.endpoint }}:{{ .Values.pgwatch.postgres.use_existing_database.port }}"
+              # value: "{{ (include "pgwatch.postgres.useExistingDatabase.endpoint" .) }}:{{ (include "pgwatch.postgres.useExistingDatabase.port" .) }}"
             - name: GF_DATABASE_NAME
-              value: {{ .Values.pgwatch.postgres.use_existing_database.grafana_database | default "pgwatch_grafana" }}
+              value: {{ (include "pgwatch.postgres.useExistingDatabase.grafanaDatabase" .) | default "pgwatch_grafana" }}
             - name: GF_DATABASE_SSL_MODE
-              value: {{ .Values.pgwatch.postgres.use_existing_database.sslmode }}
+              value: {{ (include "pgwatch.postgres.useExistingDatabase.sslmode" .) }}
             - name: GF_DATABASE_USER
               valueFrom:
                 secretKeyRef:
@@ -136,7 +136,7 @@ spec:
           projected:
             defaultMode: 416
             sources:
-              {{- if include "pgwatch.isTrue" .Values.pgwatch.postgres.enable_pg_sink }}
+              {{- if include "pgwatch.isTrue" (include "pgwatch.postgres.enablePgSink" .) }}
               {{- range $path, $_ := .Files.Glob "dashboards/postgresql/*.json" }}
               - configMap:
                   name: "grafana-postgresql-dashboard-{{ base $path | lower | replace "." "-" | replace "_" "-" }}"
@@ -146,7 +146,7 @@ spec:
               {{- end }}
               {{- end }}
 
-              {{- if include "pgwatch.isTrue" .Values.pgwatch.prometheus.enable_prom_sink }}
+              {{- if include "pgwatch.isTrue" (include "pgwatch.prometheus.enablePromSink" .) }}
               {{- range $path, $_ := .Files.Glob "dashboards/prometheus/*.json" }}
               - configMap:
                   name: "grafana-prometheus-dashboard-{{ base $path | lower | replace "." "-" | replace "_" "-" }}"
@@ -170,7 +170,7 @@ spec:
     provisioning directory — no pod restart required.
 
 */}}
-{{- if include "pgwatch.isTrue" .Values.pgwatch.grafana.enable_grafana }}
+{{- if include "pgwatch.isTrue" (include "pgwatch.grafana.enableGrafana" .) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -193,8 +193,8 @@ data:
   postgres_datasource.yml: |
     apiVersion: 1
     datasources:
-  {{- if include "pgwatch.isTrue" .Values.pgwatch.grafana.enable_datasources.postgres }}
-  {{- if include "pgwatch.isTrue" .Values.pgwatch.postgres.create_metric_database }}
+  {{- if include "pgwatch.isTrue" (include "pgwatch.grafana.enableDatasources.postgres" .) }}
+  {{- if include "pgwatch.isTrue" (include "pgwatch.postgres.createMetricDatabase" .) }}
     - name: pgwatch-metrics
       type: postgres
       url: "{{ include "pgwatch.dbHost" . }}:5432"
@@ -210,23 +210,23 @@ data:
         password: "${PGWATCH_METRICS_DS_PASSWORD}"
       version: 1
       editable: true
-  {{- else if .Values.pgwatch.postgres.use_existing_database }}
+  {{- else if (include "pgwatch.postgres.hasUseExistingDatabase" .) }}
     - name: pgwatch-metrics
       type: postgres
-      url: {{ .Values.pgwatch.postgres.use_existing_database.endpoint }}:{{ .Values.pgwatch.postgres.use_existing_database.port }}
+      url: {{ (include "pgwatch.postgres.useExistingDatabase.endpoint" .) }}:{{ (include "pgwatch.postgres.useExistingDatabase.port" .) }}
       access: proxy
       user: "${PGWATCH_METRICS_DS_USER}"
       isDefault: true
       jsonData:
-        database: {{ .Values.pgwatch.postgres.use_existing_database.database }}
-        sslmode: {{ .Values.pgwatch.postgres.use_existing_database.sslmode | default "disable" }}
+        database: {{ (include "pgwatch.postgres.useExistingDatabase.database" .) }}
+        sslmode: {{ (include "pgwatch.postgres.useExistingDatabase.sslmode" .) | default "disable" }}
       secureJsonData:
         password: "${PGWATCH_METRICS_DS_PASSWORD}"
       version: 1
       editable: true
   {{ end }}
   {{ end }}
-  {{- if include "pgwatch.isTrue" .Values.pgwatch.grafana.enable_datasources.prometheus }}
+  {{- if include "pgwatch.isTrue" (include "pgwatch.grafana.enableDatasources.prometheus" .) }}
     - name: PROMETHEUS
       type: prometheus
       access: proxy
@@ -239,7 +239,7 @@ data:
       basicAuthUser:
       basicAuthPassword:
       withCredentials:
-      {{- if not (include "pgwatch.isTrue" .Values.pgwatch.grafana.enable_datasources.postgres) }}
+      {{- if not (include "pgwatch.isTrue" (include "pgwatch.grafana.enableDatasources.postgres" .)) }}
       isDefault: true
       {{- end}}
       version: 1
