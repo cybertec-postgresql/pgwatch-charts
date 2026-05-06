@@ -1,9 +1,10 @@
+# pgwatch Helm Chart
+
 [![Documentation](https://img.shields.io/badge/Documentation-pgwat.ch-brightgreen)](https://pgwat.ch)
 [![License: MIT](https://img.shields.io/badge/License-BSD_3-green.svg)](https://opensource.org/license/bsd-3-clause)
 [![Go Build & Test](https://github.com/cybertec-postgresql/pgwatch/actions/workflows/build.yml/badge.svg)](https://github.com/cybertec-postgresql/pgwatch/actions/workflows/build.yml)
 [![Coverage Status](https://coveralls.io/repos/github/cybertec-postgresql/pgwatch/badge.svg?branch=master&service=github)](https://coveralls.io/github/cybertec-postgresql/pgwatch?branch=master)
 
-# pgwatch Helm Chart
 
 This Helm chart installs the pgwatch monitoring stack on Kubernetes or
 OpenShift. It can deploy pgwatch together with PostgreSQL, Prometheus, and
@@ -207,7 +208,7 @@ existing Kubernetes Secrets. If a required password is missing, `helm install`,
 `Please set pgwatch.postgres.adminCredentials.password`.
 
 | Deployment mode | Required values |
-|---|---|
+| --- | --- |
 | Built-in PostgreSQL (`pgwatch.postgres.createMetricDatabase=true`, `timescaledb.enabled=false`) | `pgwatch.postgres.credentials.password` for the pgwatch/Grafana application user, and `pgwatch.postgres.adminCredentials.password` for the `postgres` superuser. Alternatively set `pgwatch.postgres.credentials.existingSecret` and/or `pgwatch.postgres.adminCredentials.existingSecret`. |
 | External PostgreSQL (`pgwatch.postgres.createMetricDatabase=false`) | Database connection settings under `pgwatch.postgres.useExistingDatabase.*` plus application-user credentials via `pgwatch.postgres.credentials.password`, `pgwatch.postgres.credentials.existingSecret`, or deprecated `pgwatch.postgres.useExistingDatabase.password`. `pgwatch.postgres.adminCredentials.*` is ignored. |
 | TimescaleDB subchart (`timescaledb.enabled=true`) | Application-user credentials via `pgwatch.postgres.credentials.password` or `pgwatch.postgres.credentials.existingSecret`. `pgwatch.postgres.adminCredentials.*` is ignored; configure the TimescaleDB admin password with `timescaledb.auth.*` instead. |
@@ -490,7 +491,7 @@ install/upgrade warning. Please migrate them before the next major chart
 version, where snake_case compatibility will be removed:
 
 | Deprecated snake_case | Replacement camelCase |
-|---|---|
+| --- | --- |
 | `pgwatch.postgres.enable_pg_sink` | `pgwatch.postgres.enablePgSink` |
 | `pgwatch.postgres.settings.retention_days` | `pgwatch.postgres.settings.retentionDays` |
 | `pgwatch.postgres.create_metric_database` | `pgwatch.postgres.createMetricDatabase` |
