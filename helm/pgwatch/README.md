@@ -43,6 +43,28 @@ helm upgrade pgwatch -n pgwatch -f custom-values.yaml .
 
 ```
 
+## Upgrade notes for chart 4.0.0
+
+### Breaking change: selector labels changed
+
+Chart 4.0.0 changes the selector labels of the built-in workloads to the
+standard `app.kubernetes.io/*` schema. Kubernetes treats `Deployment` and
+`StatefulSet` selectors as immutable, so upgrades from older chart versions may
+require deleting and recreating the affected workload objects.
+
+Before upgrading an existing installation, read
+[Breaking upgrade note: selector labels changed](#breaking-upgrade-note-selector-labels-changed).
+
+### Backward-compatible deprecations
+
+Chart 4.0.0 also prefers native YAML booleans (`true` / `false`) and Helm-style
+camelCase values. Legacy string booleans (`"true"` / `"false"`) and former
+snake_case value keys still work temporarily for backward compatibility and
+emit migration warnings during install/upgrade.
+
+See [Customisation](#customisation) for the current value names and migration
+mapping.
+
 ## Customisation
 
 The Helm chart currently supports PostgreSQL and Prometheus as a sink. This can be controlled via the [values](https://github.com/cybertec-postgresql/pgwatch-charts/blob/pgwatch-3-helm-chart/helm/pgwatch/values.yaml) file.
@@ -257,6 +279,84 @@ extraDeploy:
       endpoints:
         - port: metrics
 ```
+
+### Kubernetes Labels
+
+Resources rendered by this chart use Helm's [recommended Kubernetes label schema](https://helm.sh/docs/chart_best_practices/labels/):
+
+```yaml
+app.kubernetes.io/name: pgwatch
+app.kubernetes.io/instance: <release-name>
+app.kubernetes.io/component: <component>
+app.kubernetes.io/managed-by: <release-service>
+vendor: opensource.cybertec
+```
+
+`app.kubernetes.io/name: pgwatch` identifies the application, while
+`app.kubernetes.io/component` identifies the logical role within the pgwatch
+stack, such as `pgwatch`, `grafana`, `postgres`, `prometheus`, or `db-init`.
+
+Workload and Service selectors intentionally use the stable subset
+`app.kubernetes.io/name`, `app.kubernetes.io/instance`, and
+`app.kubernetes.io/component`. These selector labels are also present on the
+matching pod templates. Descriptive labels such as
+`app.kubernetes.io/managed-by` and `vendor` are not used in selectors so they
+can change without affecting controller upgrades or Service routing.
+
+Subcharts, such as the optional Grafana and TimescaleDB charts, manage their
+own labels. This chart only relies on their documented integration points, for
+example Grafana sidecar discovery labels such as `grafana_dashboard` and
+`grafana_datasource`.
+
+#### Breaking upgrade note: selector labels changed
+
+Chart 4.0.0 changes the selectors of the built-in `Deployment` and
+`StatefulSet` resources to use the standardized `app.kubernetes.io/*` labels.
+Kubernetes treats these selectors as immutable, so upgrades from chart versions
+that used the previous selector labels may fail with:
+
+```text
+field is immutable: spec.selector
+```
+
+Affected built-in workloads are:
+
+- `Deployment/pgwatch`
+- `Deployment/grafana` when `pgwatch.grafana.useSubchart=false`
+- `Deployment/pgwatch-prometheus` when `pgwatch.prometheus.newPrometheus.createPrometheus=true`
+- `StatefulSet/postgres` when using the built-in PostgreSQL database
+
+If an upgrade fails with an immutable selector error, delete the affected
+workload object and rerun `helm upgrade`. Do not delete PVCs unless you
+intentionally want to remove stored data. For example:
+
+```sh
+kubectl delete deployment pgwatch -n pgwatch
+kubectl delete deployment grafana -n pgwatch
+kubectl delete deployment pgwatch-prometheus -n pgwatch
+kubectl delete statefulset postgres -n pgwatch --cascade=orphan
+helm upgrade pgwatch pgwatch/pgwatch -n pgwatch --values custom-values.yaml
+```
+
+> **Note on the PostgreSQL StatefulSet:** `--cascade=orphan` prevents the old
+> `postgres-0` Pod from being deleted when the StatefulSet is removed. However,
+> because the selector labels also changed, the new StatefulSet cannot adopt the
+> orphaned Pod — its old labels no longer match the new selector. The StatefulSet
+> will be stuck trying to create `postgres-0` while the orphaned Pod is still
+> running under that name.
+>
+> If this happens, delete the orphaned Pod as well. Your data is stored in the
+> PVC, not in the Pod, so it is safe:
+>
+> ```sh
+> kubectl delete pod postgres-0 -n pgwatch
+> ```
+>
+> The new StatefulSet will then create a fresh `postgres-0` that attaches to the
+> existing PVC and reconnects to your data automatically.
+
+Adjust the commands to match the components enabled in your installation and
+the namespace/release name you use.
 
 ---
 

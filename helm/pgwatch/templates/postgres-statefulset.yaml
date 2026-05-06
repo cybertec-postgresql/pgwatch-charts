@@ -8,18 +8,18 @@ kind: StatefulSet
 metadata:
   name: postgres
   namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "pgwatch.commonLabels" (dict "root" . "component" "postgres") | nindent 4 }}
 spec:
   serviceName: "postgres-svc"
   replicas: 1
   selector:
     matchLabels:
-      application: pgwatch
-      pgwatch.pods.role: postgres
+      {{- include "pgwatch.selectorLabels" (dict "root" . "component" "postgres") | nindent 6 }}
   template:
     metadata:
       labels:
-        application: pgwatch
-        pgwatch.pods.role: postgres
+        {{- include "pgwatch.commonLabels" (dict "root" . "component" "postgres") | nindent 8 }}
     spec:
       {{- include "pgwatch.podSecurityContext" (dict "global" .Values.securityContext "component" .Values.pgwatch.postgres.securityContext) | nindent 6 }}
       initContainers:
@@ -79,8 +79,7 @@ spec:
   - metadata:
       name: pgdata
       labels:
-        application: pgwatch
-        pgwatch.pods.role: postgres
+        {{- include "pgwatch.commonLabels" (dict "root" . "component" "postgres") | nindent 8 }}
     spec:
       accessModes: [ "ReadWriteOnce" ]
       storageClassName: {{ (include "pgwatch.postgres.newPgDatabase.volume.storageClass" .) }}

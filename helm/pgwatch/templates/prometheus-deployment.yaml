@@ -3,21 +3,17 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app.kubernetes.io/name: pgwatch
-    vendor: opensource.cybertec
-    postgres-operator.cybertec.at/stack: pgwatch
+    {{- include "pgwatch.commonLabels" (dict "root" . "component" "prometheus") | nindent 4 }}
   name: pgwatch-prometheus
   namespace: {{ .Release.Namespace }}
 spec:
   selector:
     matchLabels:
-      postgres-operator.cybertec.at/stack: pgwatch
-      name: pgwatch-prometheus
+      {{- include "pgwatch.selectorLabels" (dict "root" . "component" "prometheus") | nindent 6 }}
   template:
     metadata:
       labels:
-        postgres-operator.cybertec.at/stack: pgwatch
-        name: pgwatch-prometheus
+        {{- include "pgwatch.commonLabels" (dict "root" . "component" "prometheus") | nindent 8 }}
     spec:
       {{- include "pgwatch.podSecurityContext" (dict "global" .Values.securityContext "component" .Values.pgwatch.prometheus.securityContext) | nindent 6 }}
       initContainers:

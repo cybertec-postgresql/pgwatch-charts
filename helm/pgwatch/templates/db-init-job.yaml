@@ -28,7 +28,7 @@ metadata:
   name: {{ .Release.Name }}-db-init
   namespace: {{ .Release.Namespace }}
   labels:
-    application: pgwatch
+    {{- include "pgwatch.commonLabels" (dict "root" . "component" "db-init") | nindent 4 }}
   annotations:
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "0"
@@ -38,8 +38,7 @@ spec:
   template:
     metadata:
       labels:
-        application: pgwatch
-        pgwatch.pods.role: db-init
+        {{- include "pgwatch.commonLabels" (dict "root" . "component" "db-init") | nindent 8 }}
     spec:
       restartPolicy: OnFailure
       containers:

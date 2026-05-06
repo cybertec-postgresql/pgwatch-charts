@@ -2,21 +2,18 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    application: pgwatch
-    pgwatch.pods.role: pgwatch
+    {{- include "pgwatch.commonLabels" (dict "root" . "component" "pgwatch") | nindent 4 }}
   name: pgwatch
   namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      application: pgwatch
-      pgwatch.pods.role: pgwatch
+      {{- include "pgwatch.selectorLabels" (dict "root" . "component" "pgwatch") | nindent 6 }}
   template:
     metadata:
       labels:
-        application: pgwatch
-        pgwatch.pods.role: pgwatch
+        {{- include "pgwatch.commonLabels" (dict "root" . "component" "pgwatch") | nindent 8 }}
     spec:
       {{- include "pgwatch.podSecurityContext" (dict "global" .Values.securityContext "component" .Values.pgwatch.securityContext) | nindent 6 }}
       containers:

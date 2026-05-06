@@ -2,8 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   labels:
-    application: pgwatch
-    vendor: opensource.cybertec
+    {{- include "pgwatch.commonLabels" (dict "root" . "component" "pgwatch") | nindent 4 }}
   name: pgwatch-cm
 data:
   launcher.sh: |

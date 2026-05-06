@@ -15,8 +15,7 @@ metadata:
     grafana_dashboard_folder: "prometheus"
   {{- end }}
   labels:
-    application: pgwatch
-    vendor: opensource.cybertec
+    {{- include "pgwatch.commonLabels" (dict "root" $ "component" "grafana") | nindent 4 }}
     grafana_dashboard: "1"
 data:
   {{ $filename }}: |-

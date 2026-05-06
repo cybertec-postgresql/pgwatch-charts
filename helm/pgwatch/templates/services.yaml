@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    application: pgwatch
+    {{- include "pgwatch.commonLabels" (dict "root" . "component" "pgwatch") | nindent 4 }}
   name: pgwatch-svc
   namespace: {{ .Release.Namespace }}
 spec:
@@ -16,8 +16,7 @@ spec:
       targetPort: 9188
 {{ end }}
   selector:
-    application: pgwatch
-    pgwatch.pods.role: pgwatch
+    {{- include "pgwatch.selectorLabels" (dict "root" . "component" "pgwatch") | nindent 4 }}
 ---
 {{/*
   grafana-svc is only needed for the custom Grafana Deployment.
@@ -28,7 +27,7 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    application: pgwatch
+    {{- include "pgwatch.commonLabels" (dict "root" . "component" "grafana") | nindent 4 }}
   name: grafana-svc
   namespace: {{ .Release.Namespace }}
 spec:
@@ -37,8 +36,7 @@ spec:
       port: 3000
       targetPort: 3000
   selector:
-    application: pgwatch
-    pgwatch.pods.role: grafana
+    {{- include "pgwatch.selectorLabels" (dict "root" . "component" "grafana") | nindent 4 }}
 ---
 {{ end }}
 {{/*
@@ -50,7 +48,7 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    application: pgwatch
+    {{- include "pgwatch.commonLabels" (dict "root" . "component" "postgres") | nindent 4 }}
   name: postgres-svc
   namespace: {{ .Release.Namespace }}
 spec:
@@ -59,8 +57,7 @@ spec:
       port: 5432
       targetPort: 5432
   selector:
-    application: pgwatch
-    pgwatch.pods.role: postgres
+    {{- include "pgwatch.selectorLabels" (dict "root" . "component" "postgres") | nindent 4 }}
 {{ end }}
 ---
 {{- if include "pgwatch.isTrue" (include "pgwatch.prometheus.newPrometheus.createPrometheus" .) }}
@@ -68,7 +65,7 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    application: pgwatch
+    {{- include "pgwatch.commonLabels" (dict "root" . "component" "prometheus") | nindent 4 }}
   name: pgwatch-prometheus-svc
   namespace: {{ .Release.Namespace }}
 spec:
@@ -77,5 +74,5 @@ spec:
   - name: prometheus
     port: 9090
   selector:
-    name: pgwatch-prometheus
+    {{- include "pgwatch.selectorLabels" (dict "root" . "component" "prometheus") | nindent 4 }}
 {{ end }}
