@@ -335,8 +335,25 @@ kubectl delete deployment pgwatch -n pgwatch
 kubectl delete deployment grafana -n pgwatch
 kubectl delete deployment pgwatch-prometheus -n pgwatch
 kubectl delete statefulset postgres -n pgwatch --cascade=orphan
-helm upgrade pgwatch pgwatch/pgwatch -n pgwatch --values custom-values.yaml # or the equivalent command you use to helm upgrade your chart.
+helm upgrade pgwatch pgwatch/pgwatch -n pgwatch --values custom-values.yaml
 ```
+
+> **Note on the PostgreSQL StatefulSet:** `--cascade=orphan` prevents the old
+> `postgres-0` Pod from being deleted when the StatefulSet is removed. However,
+> because the selector labels also changed, the new StatefulSet cannot adopt the
+> orphaned Pod — its old labels no longer match the new selector. The StatefulSet
+> will be stuck trying to create `postgres-0` while the orphaned Pod is still
+> running under that name.
+>
+> If this happens, delete the orphaned Pod as well. Your data is stored in the
+> PVC, not in the Pod, so it is safe:
+>
+> ```sh
+> kubectl delete pod postgres-0 -n pgwatch
+> ```
+>
+> The new StatefulSet will then create a fresh `postgres-0` that attaches to the
+> existing PVC and reconnects to your data automatically.
 
 Adjust the commands to match the components enabled in your installation and
 the namespace/release name you use.
