@@ -150,8 +150,8 @@ the namespace/release name you use.
 
 Chart 4.0.0 introduces explicit Secret-based credential handling. Chart
 versions before this did not have `pgwatch.postgres.credentials` or
-`pgwatch.postgres.adminCredentials`, so upgrades with `--reuse-values` may fail
-unless you provide the newly required credential values.
+`pgwatch.postgres.adminCredentials`, so upgrades with `--reuse-values` can miss
+new 4.x defaults and may fail unless you provide the newly required values.
 
 Before installing or upgrading, review
 [Mandatory credential values](#mandatory-credential-values). For example, when
@@ -159,10 +159,15 @@ using the built-in PostgreSQL database, both the pgwatch application-user
 password and the PostgreSQL admin password must be provided:
 
 ```sh
-helm upgrade pgwatch pgwatch/pgwatch -n pgwatch --reuse-values \
+helm upgrade pgwatch pgwatch/pgwatch -n pgwatch --values custom-values.yaml \
   --set pgwatch.postgres.credentials.password='change-me-app' \
   --set pgwatch.postgres.adminCredentials.password='change-me-admin'
 ```
+
+> **Note:** Avoid `--reuse-values` for 3.x -> 4.x upgrades unless the old
+> release values have been migrated. Prefer an explicit 4.x values file, or use
+> `--reset-values --values custom-values.yaml` to start from the new chart
+> defaults.
 
 ### Backward-compatible deprecations
 
