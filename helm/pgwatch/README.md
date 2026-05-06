@@ -1,32 +1,58 @@
+# pgwatch Helm Chart
+
 [![Documentation](https://img.shields.io/badge/Documentation-pgwat.ch-brightgreen)](https://pgwat.ch)
 [![License: MIT](https://img.shields.io/badge/License-BSD_3-green.svg)](https://opensource.org/license/bsd-3-clause)
 [![Go Build & Test](https://github.com/cybertec-postgresql/pgwatch/actions/workflows/build.yml/badge.svg)](https://github.com/cybertec-postgresql/pgwatch/actions/workflows/build.yml)
 [![Coverage Status](https://coveralls.io/repos/github/cybertec-postgresql/pgwatch/badge.svg?branch=master&service=github)](https://coveralls.io/github/cybertec-postgresql/pgwatch?branch=master)
 
-# pgwatch Helm Chart
 
-This Helm chart allows you to set up the pgwatch stack using Helm in containers or distributions such as OpenShift or Kubernetes.
+This Helm chart installs the pgwatch monitoring stack on Kubernetes or
+OpenShift. It can deploy pgwatch together with PostgreSQL, Prometheus, and
+Grafana components, and it supports optional TimescaleDB and Grafana subcharts.
+
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [Choose Your Metrics Storage](#choose-your-metrics-storage)
+- [Upgrade to Chart 4.x](#upgrade-to-chart-4x)
+- [Configuration](#configuration)
+  - [Supported components](#supported-components)
+  - [Credential Management](#credential-management)
+  - [Environment Variables and Config Injection](#environment-variables-and-config-injection)
+  - [Security Contexts](#security-contexts)
+  - [Extra Resources](#extra-resources)
+- [Kubernetes Labels and Selectors](#kubernetes-labels-and-selectors)
+- [Helm Dependencies](#helm-dependencies)
+- [Local Development (Minikube)](#local-development-minikube)
+- [Migration Reference](#migration-reference)
 
 ## Quick Start
 
-To use the Helm-Charts, you can either patch the repo onto your local system or install and update it directly using the Helm repository.
-In either case, please familiarise yourself with the relevant values files before use and create a custom variant to set up pgWatch according to your preferences in your environment.
+Install the chart either from the Helm repository or from a local clone. In both
+cases, review the relevant values in
+[`values.yaml`](https://github.com/cybertec-postgresql/pgwatch-charts/blob/pgwatch-3-helm-chart/helm/pgwatch/values.yaml)
+and create a `custom-values.yaml` for your environment.
 
-### Helm-Repository
+> **Important:** The chart does not ship default passwords. Set the required
+> credential values or reference existing Kubernetes Secrets before running
+> `helm install`, `helm upgrade`, or `helm template`. See
+> [Credential Management](#credential-management).
+
+### Install from the Helm repository
 
 ```sh
-# Add Helm-Repo
+# Add Helm repository
 helm repo add pgwatch https://cybertec-postgresql.github.io/pgwatch-charts
 helm repo update
 
-# Install helm chart
+# Install chart
 helm install pgwatch pgwatch/pgwatch -n pgwatch --create-namespace --values custom-values.yaml
 
-# Upgrade helm chart
+# Upgrade chart
 helm upgrade pgwatch pgwatch/pgwatch -n pgwatch --values custom-values.yaml
 ```
 
-### git clone
+### Install from a git clone
 
 ```sh
 git clone https://github.com/cybertec-postgresql/pgwatch-charts.git
@@ -35,25 +61,108 @@ cd pgwatch-charts/helm/pgwatch
 # Optional: only needed when using the TimescaleDB or Grafana subcharts
 helm dependency update .
 
-# Install helm chart
+# Install chart
 helm install pgwatch -n pgwatch --create-namespace -f custom-values.yaml .
 
-# Upgrade helm chart
+# Upgrade chart
 helm upgrade pgwatch -n pgwatch -f custom-values.yaml .
-
 ```
 
-## Upgrade notes for chart 4.0.0
+## Choose Your Metrics Storage
+
+The chart supports PostgreSQL and Prometheus as metrics storage backends. You can
+use one or both simultaneously.
+
+### PostgreSQL sink
+
+- **Built-in PostgreSQL**: quickest start; the chart creates and manages a
+  PostgreSQL instance in the same namespace. See
+  [Credential Management](#credential-management).
+- **External PostgreSQL**: use this when the metrics database is already managed
+  outside this chart. Configure `pgwatch.postgres.useExistingDatabase.*` and
+  application credentials. See [Credential Management](#credential-management).
+- **TimescaleDB subchart**: use this when you want TimescaleDB instead of the
+  built-in PostgreSQL StatefulSet. See [Helm Dependencies](#helm-dependencies).
+
+### Prometheus sink
+
+- **Built-in Prometheus**: the chart can create and manage a Prometheus instance
+  in the same namespace. Configure via `pgwatch.prometheus.newPrometheus.*`.
+- **External Prometheus**: planned (not yet implemented).
+
+See [Supported components](#supported-components) for detailed configuration options.
+
+## Upgrade to Chart 4.x
+
+Read this section before upgrading an existing installation to chart 4.x.
 
 ### Breaking change: selector labels changed
 
-Chart 4.0.0 changes the selector labels of the built-in workloads to the
-standard `app.kubernetes.io/*` schema. Kubernetes treats `Deployment` and
-`StatefulSet` selectors as immutable, so upgrades from older chart versions may
-require deleting and recreating the affected workload objects.
+Chart 4.0.0 changes the selectors of the built-in `Deployment` and
+`StatefulSet` resources to use the standardized `app.kubernetes.io/*` labels.
+Kubernetes treats these selectors as immutable, so upgrades from chart versions
+that used the previous selector labels may fail with:
 
-Before upgrading an existing installation, read
-[Breaking upgrade note: selector labels changed](#breaking-upgrade-note-selector-labels-changed).
+```text
+field is immutable: spec.selector
+```
+
+Affected built-in workloads are:
+
+- `Deployment/pgwatch`
+- `Deployment/grafana` when `pgwatch.grafana.useSubchart=false`
+- `Deployment/pgwatch-prometheus` when `pgwatch.prometheus.newPrometheus.createPrometheus=true`
+- `StatefulSet/postgres` when using the built-in PostgreSQL database
+
+If an upgrade fails with an immutable selector error, delete the affected
+workload object and rerun `helm upgrade`. Do not delete PVCs unless you
+intentionally want to remove stored data. For example:
+
+```sh
+kubectl delete deployment pgwatch -n pgwatch
+kubectl delete deployment grafana -n pgwatch
+kubectl delete deployment pgwatch-prometheus -n pgwatch
+kubectl delete statefulset postgres -n pgwatch --cascade=orphan
+helm upgrade pgwatch pgwatch/pgwatch -n pgwatch --values custom-values.yaml
+```
+
+> **Note on the PostgreSQL StatefulSet:** `--cascade=orphan` prevents the old
+> `postgres-0` Pod from being deleted when the StatefulSet is removed. However,
+> because the selector labels also changed, the new StatefulSet cannot adopt the
+> orphaned Pod — its old labels no longer match the new selector. The StatefulSet
+> will be stuck trying to create `postgres-0` while the orphaned Pod is still
+> running under that name.
+>
+> If this happens, delete the orphaned Pod as well. Your data is stored in the
+> PVC, not in the Pod, so it is safe:
+>
+> ```sh
+> kubectl delete pod postgres-0 -n pgwatch
+> ```
+>
+> The new StatefulSet will then create a fresh `postgres-0` that attaches to the
+> existing PVC and reconnects to your data automatically.
+
+Adjust the commands to match the components enabled in your installation and
+the namespace/release name you use.
+
+### Required credential values
+
+Chart 4.0.0 introduces explicit Secret-based credential handling. Chart
+versions before this did not have `pgwatch.postgres.credentials` or
+`pgwatch.postgres.adminCredentials`, so upgrades with `--reuse-values` may fail
+unless you provide the newly required credential values.
+
+Before installing or upgrading, review
+[Mandatory credential values](#mandatory-credential-values). For example, when
+using the built-in PostgreSQL database, both the pgwatch application-user
+password and the PostgreSQL admin password must be provided:
+
+```sh
+helm upgrade pgwatch pgwatch/pgwatch -n pgwatch --reuse-values \
+  --set pgwatch.postgres.credentials.password='change-me-app' \
+  --set pgwatch.postgres.adminCredentials.password='change-me-admin'
+```
 
 ### Backward-compatible deprecations
 
@@ -62,36 +171,14 @@ camelCase values. Legacy string booleans (`"true"` / `"false"`) and former
 snake_case value keys still work temporarily for backward compatibility and
 emit migration warnings during install/upgrade.
 
-See [Customisation](#customisation) for the current value names and migration
-mapping.
+See [Migration Reference](#migration-reference) for the current value names and
+migration mapping.
 
-## Customisation
+## Configuration
+
+### Supported components
 
 The Helm chart currently supports PostgreSQL and Prometheus as a sink. This can be controlled via the [values](https://github.com/cybertec-postgresql/pgwatch-charts/blob/pgwatch-3-helm-chart/helm/pgwatch/values.yaml) file.
-
-Boolean options in this chart now use native YAML booleans (`true` / `false`).
-Legacy string values (`"true"` / `"false"`) are still accepted temporarily for
-compatibility, but are deprecated and will be removed in a future chart version.
-
-Values keys follow Helm's camelCase naming convention. The former snake_case
-keys are still accepted as backward-compatible fallbacks and emit a Helm
-install/upgrade warning. Please migrate them before the next major chart
-version, where snake_case compatibility will be removed:
-
-| Deprecated snake_case | Replacement camelCase |
-|---|---|
-| `pgwatch.postgres.enable_pg_sink` | `pgwatch.postgres.enablePgSink` |
-| `pgwatch.postgres.settings.retention_days` | `pgwatch.postgres.settings.retentionDays` |
-| `pgwatch.postgres.create_metric_database` | `pgwatch.postgres.createMetricDatabase` |
-| `pgwatch.postgres.new_pg_database` | `pgwatch.postgres.newPgDatabase` |
-| `pgwatch.postgres.use_existing_database` | `pgwatch.postgres.useExistingDatabase` |
-| `pgwatch.postgres.use_existing_database.grafana_database` | `pgwatch.postgres.useExistingDatabase.grafanaDatabase` |
-| `pgwatch.prometheus.enable_prom_sink` | `pgwatch.prometheus.enablePromSink` |
-| `pgwatch.prometheus.new_prometheus` | `pgwatch.prometheus.newPrometheus` |
-| `pgwatch.prometheus.new_prometheus.create_prometheus` | `pgwatch.prometheus.newPrometheus.createPrometheus` |
-| `pgwatch.prometheus.new_prometheus.settings.retention_days` | `pgwatch.prometheus.newPrometheus.settings.retentionDays` |
-| `pgwatch.grafana.enable_grafana` | `pgwatch.grafana.enableGrafana` |
-| `pgwatch.grafana.enable_datasources` | `pgwatch.grafana.enableDatasources` |
 
 - PostgreSQL
   - Use an existing configuration and metric database
@@ -104,14 +191,29 @@ version, where snake_case compatibility will be removed:
   - Deploy Grafana with dashboards for both PostgreSQL and Prometheus sinks
   - Optionally use the official Grafana Helm subchart (see [Helm Dependencies](#helm-dependencies))
 
-## Advanced Customisation
-
 ### Credential Management
 
 [Issue #12](https://github.com/cybertec-postgresql/pgwatch-charts/issues/12) changed credential handling to use Kubernetes Secrets instead of
 hardcoded values or plaintext in manifests.
 
 **Deprecation:** `useExistingDatabase.username/password` still work but will emit warnings. They will be removed in a future chart version.
+
+#### Mandatory credential values
+
+The chart does **not** ship default passwords. Depending on the PostgreSQL mode
+you use, you must either provide passwords in your values file or reference
+existing Kubernetes Secrets. If a required password is missing, `helm install`,
+`helm upgrade`, or `helm template` fails with a message such as
+`Please set pgwatch.postgres.credentials.password` or
+`Please set pgwatch.postgres.adminCredentials.password`.
+
+| Deployment mode | Required values |
+| --- | --- |
+| Built-in PostgreSQL (`pgwatch.postgres.createMetricDatabase=true`, `timescaledb.enabled=false`) | `pgwatch.postgres.credentials.password` for the pgwatch/Grafana application user, and `pgwatch.postgres.adminCredentials.password` for the `postgres` superuser. Alternatively set `pgwatch.postgres.credentials.existingSecret` and/or `pgwatch.postgres.adminCredentials.existingSecret`. |
+| External PostgreSQL (`pgwatch.postgres.createMetricDatabase=false`) | Database connection settings under `pgwatch.postgres.useExistingDatabase.*` plus application-user credentials via `pgwatch.postgres.credentials.password`, `pgwatch.postgres.credentials.existingSecret`, or deprecated `pgwatch.postgres.useExistingDatabase.password`. `pgwatch.postgres.adminCredentials.*` is ignored. |
+| TimescaleDB subchart (`timescaledb.enabled=true`) | Application-user credentials via `pgwatch.postgres.credentials.password` or `pgwatch.postgres.credentials.existingSecret`. `pgwatch.postgres.adminCredentials.*` is ignored; configure the TimescaleDB admin password with `timescaledb.auth.*` instead. |
+
+Examples below use placeholder passwords. Replace them before production use.
 
 #### Precedence
 
@@ -175,31 +277,6 @@ pgwatch:
       existingSecret: pgwatch-external-db
       usernameKey: username
       passwordKey: password
-```
-
-#### Migrating from deprecated inline credentials
-
-Before (deprecated, still works with warning):
-
-```yaml
-pgwatch:
-  postgres:
-    useExistingDatabase:
-      endpoint: postgresql.local
-      username: pgwatch_user   # deprecated
-      password: change-me      # deprecated
-```
-
-After:
-
-```yaml
-pgwatch:
-  postgres:
-    useExistingDatabase:
-      endpoint: postgresql.local
-    credentials:
-      username: pgwatch_user
-      password: change-me
 ```
 
 #### Grafana subchart note
@@ -280,7 +357,7 @@ extraDeploy:
         - port: metrics
 ```
 
-### Kubernetes Labels
+## Kubernetes Labels and Selectors
 
 Resources rendered by this chart use Helm's [recommended Kubernetes label schema](https://helm.sh/docs/chart_best_practices/labels/):
 
@@ -308,58 +385,6 @@ own labels. This chart only relies on their documented integration points, for
 example Grafana sidecar discovery labels such as `grafana_dashboard` and
 `grafana_datasource`.
 
-#### Breaking upgrade note: selector labels changed
-
-Chart 4.0.0 changes the selectors of the built-in `Deployment` and
-`StatefulSet` resources to use the standardized `app.kubernetes.io/*` labels.
-Kubernetes treats these selectors as immutable, so upgrades from chart versions
-that used the previous selector labels may fail with:
-
-```text
-field is immutable: spec.selector
-```
-
-Affected built-in workloads are:
-
-- `Deployment/pgwatch`
-- `Deployment/grafana` when `pgwatch.grafana.useSubchart=false`
-- `Deployment/pgwatch-prometheus` when `pgwatch.prometheus.newPrometheus.createPrometheus=true`
-- `StatefulSet/postgres` when using the built-in PostgreSQL database
-
-If an upgrade fails with an immutable selector error, delete the affected
-workload object and rerun `helm upgrade`. Do not delete PVCs unless you
-intentionally want to remove stored data. For example:
-
-```sh
-kubectl delete deployment pgwatch -n pgwatch
-kubectl delete deployment grafana -n pgwatch
-kubectl delete deployment pgwatch-prometheus -n pgwatch
-kubectl delete statefulset postgres -n pgwatch --cascade=orphan
-helm upgrade pgwatch pgwatch/pgwatch -n pgwatch --values custom-values.yaml
-```
-
-> **Note on the PostgreSQL StatefulSet:** `--cascade=orphan` prevents the old
-> `postgres-0` Pod from being deleted when the StatefulSet is removed. However,
-> because the selector labels also changed, the new StatefulSet cannot adopt the
-> orphaned Pod — its old labels no longer match the new selector. The StatefulSet
-> will be stuck trying to create `postgres-0` while the orphaned Pod is still
-> running under that name.
->
-> If this happens, delete the orphaned Pod as well. Your data is stored in the
-> PVC, not in the Pod, so it is safe:
->
-> ```sh
-> kubectl delete pod postgres-0 -n pgwatch
-> ```
->
-> The new StatefulSet will then create a fresh `postgres-0` that attaches to the
-> existing PVC and reconnects to your data automatically.
-
-Adjust the commands to match the components enabled in your installation and
-the namespace/release name you use.
-
----
-
 ## Helm Dependencies
 
 Both subcharts are **opt-in** and disabled by default. Run `helm dependency update helm/pgwatch` before installing or upgrading.
@@ -367,7 +392,7 @@ Both subcharts are **opt-in** and disabled by default. Run `helm dependency upda
 ### TimescaleDB (`timescaledb.enabled: true`)
 
 Replaces the built-in PostgreSQL StatefulSet with a TimescaleDB instance.
-Chart: `cloudpirates/timescaledb` `0.10.4` - [ArtifactHub](https://artifacthub.io/packages/helm/cloudpirates-timescaledb/timescaledb)
+Chart: `cloudpirates/timescaledb` - [ArtifactHub](https://artifacthub.io/packages/helm/cloudpirates-timescaledb/timescaledb)
 
 **Note:** `pgwatch.postgres.adminCredentials` has no effect when TimescaleDB is enabled. Use `timescaledb.auth.*` instead.
 
@@ -387,7 +412,7 @@ timescaledb:
 ### Grafana subchart (`pgwatch.grafana.useSubchart: true`)
 
 Replaces the custom Grafana Deployment. Dashboards and datasources are auto-provisioned via the k8s-sidecar by watching labelled ConfigMaps - no pod restart needed.
-Chart: `grafana-community/grafana` `10.5.15` - [GitHub](https://github.com/grafana-community/helm-charts/tree/main/charts/grafana)
+Chart: `grafana-community/grafana` - [GitHub](https://github.com/grafana-community/helm-charts/tree/main/charts/grafana)
 
 ```yaml
 pgwatch:
@@ -450,4 +475,58 @@ timescaledb:
     readOnlyRootFilesystem: false
     capabilities:
       drop: []
+```
+
+## Migration Reference
+
+### snake_case to camelCase values
+
+Boolean options in this chart now use native YAML booleans (`true` / `false`).
+Legacy string values (`"true"` / `"false"`) are still accepted temporarily for
+compatibility, but are deprecated and will be removed in a future chart version.
+
+Values keys follow Helm's camelCase naming convention. The former snake_case
+keys are still accepted as backward-compatible fallbacks and emit a Helm
+install/upgrade warning. Please migrate them before the next major chart
+version, where snake_case compatibility will be removed:
+
+| Deprecated snake_case | Replacement camelCase |
+| --- | --- |
+| `pgwatch.postgres.enable_pg_sink` | `pgwatch.postgres.enablePgSink` |
+| `pgwatch.postgres.settings.retention_days` | `pgwatch.postgres.settings.retentionDays` |
+| `pgwatch.postgres.create_metric_database` | `pgwatch.postgres.createMetricDatabase` |
+| `pgwatch.postgres.new_pg_database` | `pgwatch.postgres.newPgDatabase` |
+| `pgwatch.postgres.use_existing_database` | `pgwatch.postgres.useExistingDatabase` |
+| `pgwatch.postgres.use_existing_database.grafana_database` | `pgwatch.postgres.useExistingDatabase.grafanaDatabase` |
+| `pgwatch.prometheus.enable_prom_sink` | `pgwatch.prometheus.enablePromSink` |
+| `pgwatch.prometheus.new_prometheus` | `pgwatch.prometheus.newPrometheus` |
+| `pgwatch.prometheus.new_prometheus.create_prometheus` | `pgwatch.prometheus.newPrometheus.createPrometheus` |
+| `pgwatch.prometheus.new_prometheus.settings.retention_days` | `pgwatch.prometheus.newPrometheus.settings.retentionDays` |
+| `pgwatch.grafana.enable_grafana` | `pgwatch.grafana.enableGrafana` |
+| `pgwatch.grafana.enable_datasources` | `pgwatch.grafana.enableDatasources` |
+
+### Deprecated inline database credentials
+
+Before, credentials could be defined inline under `useExistingDatabase`. This is
+deprecated but still works with a warning:
+
+```yaml
+pgwatch:
+  postgres:
+    useExistingDatabase:
+      endpoint: postgresql.local
+      username: pgwatch_user   # deprecated
+      password: change-me      # deprecated
+```
+
+Move credentials under `pgwatch.postgres.credentials` instead:
+
+```yaml
+pgwatch:
+  postgres:
+    useExistingDatabase:
+      endpoint: postgresql.local
+    credentials:
+      username: pgwatch_user
+      password: change-me
 ```
