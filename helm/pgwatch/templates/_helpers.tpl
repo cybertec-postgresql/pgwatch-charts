@@ -32,6 +32,7 @@ app.kubernetes.io/name: pgwatch
 app.kubernetes.io/instance: {{ .root.Release.Name }}
 app.kubernetes.io/component: {{ .component }}
 app.kubernetes.io/managed-by: {{ .root.Release.Service }}
+helm.sh/chart: "{{ .root.Chart.Name }}-{{ .root.Chart.Version | replace "+" "_" }}"
 vendor: opensource.cybertec
 {{- end }}
 

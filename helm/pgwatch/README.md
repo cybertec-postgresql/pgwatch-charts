@@ -335,7 +335,7 @@ kubectl delete deployment pgwatch -n pgwatch
 kubectl delete deployment grafana -n pgwatch
 kubectl delete deployment pgwatch-prometheus -n pgwatch
 kubectl delete statefulset postgres -n pgwatch --cascade=orphan
-helm upgrade pgwatch pgwatch/pgwatch -n pgwatch --values custom-values.yaml
+helm upgrade pgwatch pgwatch/pgwatch -n pgwatch --values custom-values.yaml # or the equivalent command you use to helm upgrade your chart.
 ```
 
 Adjust the commands to match the components enabled in your installation and
