@@ -55,6 +55,24 @@ require deleting and recreating the affected workload objects.
 Before upgrading an existing installation, read
 [Breaking upgrade note: selector labels changed](#breaking-upgrade-note-selector-labels-changed).
 
+### Required credential values
+
+Chart 4.0.0 introduces explicit Secret-based credential handling. Chart
+versions before this did not have `pgwatch.postgres.credentials` or
+`pgwatch.postgres.adminCredentials`, so upgrades with `--reuse-values` may fail
+unless you provide the newly required credential values.
+
+Before installing or upgrading, review
+[Mandatory credential values](#mandatory-credential-values). For example, when
+using the built-in PostgreSQL database, both the pgwatch application-user
+password and the PostgreSQL admin password must be provided:
+
+```sh
+helm upgrade pgwatch pgwatch/pgwatch -n pgwatch --reuse-values \
+  --set pgwatch.postgres.credentials.password='change-me-app' \
+  --set pgwatch.postgres.adminCredentials.password='change-me-admin'
+```
+
 ### Backward-compatible deprecations
 
 Chart 4.0.0 also prefers native YAML booleans (`true` / `false`) and Helm-style
@@ -112,6 +130,23 @@ version, where snake_case compatibility will be removed:
 hardcoded values or plaintext in manifests.
 
 **Deprecation:** `useExistingDatabase.username/password` still work but will emit warnings. They will be removed in a future chart version.
+
+#### Mandatory credential values
+
+The chart does **not** ship default passwords. Depending on the PostgreSQL mode
+you use, you must either provide passwords in your values file or reference
+existing Kubernetes Secrets. If a required password is missing, `helm install`,
+`helm upgrade`, or `helm template` fails with a message such as
+`Please set pgwatch.postgres.credentials.password` or
+`Please set pgwatch.postgres.adminCredentials.password`.
+
+| Deployment mode | Required values |
+|---|---|
+| Built-in PostgreSQL (`pgwatch.postgres.createMetricDatabase=true`, `timescaledb.enabled=false`) | `pgwatch.postgres.credentials.password` for the pgwatch/Grafana application user, and `pgwatch.postgres.adminCredentials.password` for the `postgres` superuser. Alternatively set `pgwatch.postgres.credentials.existingSecret` and/or `pgwatch.postgres.adminCredentials.existingSecret`. |
+| External PostgreSQL (`pgwatch.postgres.createMetricDatabase=false`) | Database connection settings under `pgwatch.postgres.useExistingDatabase.*` plus application-user credentials via `pgwatch.postgres.credentials.password`, `pgwatch.postgres.credentials.existingSecret`, or deprecated `pgwatch.postgres.useExistingDatabase.password`. `pgwatch.postgres.adminCredentials.*` is ignored. |
+| TimescaleDB subchart (`timescaledb.enabled=true`) | Application-user credentials via `pgwatch.postgres.credentials.password` or `pgwatch.postgres.credentials.existingSecret`. `pgwatch.postgres.adminCredentials.*` is ignored; configure the TimescaleDB admin password with `timescaledb.auth.*` instead. |
+
+Examples below use placeholder passwords. Replace them before production use.
 
 #### Precedence
 
