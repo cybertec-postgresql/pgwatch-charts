@@ -19,6 +19,10 @@ spec:
       initContainers:
       - name: init-permissions
         image: busybox
+        {{- with .Values.pgwatch.prometheus.newPrometheus.initContainers.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
         command:
         - /bin/sh
         - -c
@@ -33,6 +37,10 @@ spec:
           name: prometheus-volume
       containers:
       - image: {{ (include "pgwatch.prometheus.newPrometheus.image" .) }}
+        {{- with .Values.pgwatch.prometheus.newPrometheus.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3

@@ -40,6 +40,10 @@ pgwatch:
   # == Core Settings ==
 
   image: "docker.io/cybertecpostgresql/pgwatch:latest"
+
+  # -- Resource requests and limits for the pgwatch deployment.
+  resources: {}
+
   # -- Web UI listen port. Must match PW_WEBADDR (default :8080). Used for containerPort and Service.
   webPort: 8080
 
@@ -123,9 +127,17 @@ pgwatch:
     # -- New PostgreSQL instance — active when createMetricDatabase: true.
     newPgDatabase:
       image: "docker.io/postgres:18.3-alpine3.23"
+      # -- Resource requests and limits for the Metrics Database StatefulSet.
+      resources: {}
       volume:
         size: '10Gi'
         storageClass: 'standard'
+      # -- Resource requests and limits for the Metrics Database init job.
+      DbInitJob:
+        resources: {}
+      # -- Resource requests and limits for the Metrics Database initContainers.
+      initContainers:
+        resources: {}
 
     # -- External database connection (active when createMetricDatabase: false).
     # Set credentials via credentials.* below; username/password here are deprecated.
@@ -193,11 +205,16 @@ pgwatch:
     newPrometheus:
       createPrometheus: true
       image: "prom/prometheus:main"
+      # -- Resource requests and limits for the Prometheus deployment.
+      resources: {}
       settings:
         retentionDays: 31
       volume:
         size: '10Gi'
         storageClass: 'standard'
+      # -- Resource requests and limits for the Prometheus initContainers.
+      initContainers:
+        resources: {}
 
     # -- Existing Prometheus instance — active when createPrometheus: false.
     #
@@ -238,6 +255,8 @@ pgwatch:
     # When false (default): the custom Deployment runs exactly as before.
     useSubchart: false
     image: grafana/grafana:12.4.0-21419697389 # Dashboards are prepared for grafana v12
+    # -- Resource requests and limits for the Grafana deployment.
+    resources: {}
     enableGrafana: true
     # -- Controls which Grafana datasources are provisioned.
     # Independent of the sink settings (enablePgSink / enablePromSink), which control
