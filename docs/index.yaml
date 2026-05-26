@@ -3,7 +3,25 @@ entries:
   pgwatch:
   - apiVersion: v2
     appVersion: "5.2"
-    created: "2026-05-06T21:06:28.540763681+02:00"
+    created: "2026-05-26T11:05:48.305844653+02:00"
+    dependencies:
+    - condition: timescaledb.enabled
+      name: timescaledb
+      repository: oci://registry-1.docker.io/cloudpirates
+      version: 0.11.3
+    - condition: pgwatch.grafana.useSubchart
+      name: grafana
+      repository: oci://ghcr.io/grafana-community/helm-charts
+      version: 10.5.15
+    description: A Helm chart for pgwatch monitoring tools
+    digest: 3f5553c752dffe97bee10b08acbb48c3446e46233060af1ee8d8bc220109bd8a
+    name: pgwatch
+    urls:
+    - https://cybertec-postgresql.github.io/pgwatch-charts/pgwatch-4.0.1.tgz
+    version: 4.0.1
+  - apiVersion: v2
+    appVersion: "5.2"
+    created: "2026-05-26T11:05:48.299440176+02:00"
     dependencies:
     - condition: timescaledb.enabled
       name: timescaledb
@@ -21,7 +39,7 @@ entries:
     version: 4.0.0
   - apiVersion: v1
     appVersion: "3.2"
-    created: "2026-05-06T21:06:28.533965815+02:00"
+    created: "2026-05-26T11:05:48.292974336+02:00"
     description: A Helm chart for pgwatch monitoring tools
     digest: 114f2f8ac8e1a8cceb5c5062a86e54f9b45c742bfa3b04e9701dd03bc22262b8
     name: pgwatch
@@ -30,11 +48,11 @@ entries:
     version: 3.1.0
   - apiVersion: v1
     appVersion: "3.2"
-    created: "2026-05-06T21:06:28.530836691+02:00"
+    created: "2026-05-26T11:05:48.288766946+02:00"
     description: A Helm chart for pgwatch monitoring tools
     digest: 69410525096ac64bac0f782205d92485e0d57cfc72f2e1d1684933baf3c21100
     name: pgwatch
     urls:
     - https://cybertec-postgresql.github.io/pgwatch-charts/pgwatch-3.0.1.tgz
     version: 3.0.1
-generated: "2026-05-06T21:06:28.526888141+02:00"
+generated: "2026-05-26T11:05:48.276061634+02:00"
