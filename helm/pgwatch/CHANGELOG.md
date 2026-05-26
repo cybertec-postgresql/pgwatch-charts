@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- `db-init` hook Job now honors `timescaledb.auth.secretKeys.adminPasswordKey` when TimescaleDB is enabled.
+
 ## [4.0.1] – 2026-05-26
 
 ### Added

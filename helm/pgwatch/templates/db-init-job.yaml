@@ -13,7 +13,7 @@
 
   Admin credentials are sourced from:
     - TimescaleDB, generated secret  : Secret <release>-timescaledb           key postgres-password
-    - TimescaleDB, existingSecret    : Secret timescaledb.auth.existingSecret  key postgres-password
+    - TimescaleDB, existingSecret    : Secret timescaledb.auth.existingSecret  key timescaledb.auth.secretKeys.adminPasswordKey
     - Plain postgres                 : Secret pgwatch-postgresql-secret-postgres  key password
 
   The pgwatch user credentials are sourced from:
@@ -58,7 +58,7 @@ spec:
                 secretKeyRef:
                   {{- if .Values.timescaledb.enabled }}
                   name: {{ .Values.timescaledb.auth.existingSecret | default (printf "%s-timescaledb" .Release.Name) }}
-                  key: postgres-password
+                  key: {{ include "pgwatch.timescaledbAdminPasswordKey" . }}
                   {{- else }}
                   name: {{ include "pgwatch.adminCredentialSecretName" . }}
                   key: {{ include "pgwatch.adminCredentialPasswordKey" . }}
