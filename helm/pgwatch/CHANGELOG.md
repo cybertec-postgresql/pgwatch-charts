@@ -6,6 +6,10 @@
 
 - `seccompProfile.type: RuntimeDefault` in global `securityContext.pod` defaults when `securityContext.enabled=true` ([#31](https://github.com/cybertec-postgresql/pgwatch-charts/issues/31)).
 
+### Fixed
+
+- `db-init` hook Job now honors global and PostgreSQL component `securityContext` settings.
+
 ## [4.0.0] – 2026-05-07
 
 ### Breaking changes
