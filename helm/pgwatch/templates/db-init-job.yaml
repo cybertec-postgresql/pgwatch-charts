@@ -40,9 +40,11 @@ spec:
       labels:
         {{- include "pgwatch.commonLabels" (dict "root" . "component" "db-init") | nindent 8 }}
     spec:
+      {{- include "pgwatch.podSecurityContext" (dict "global" .Values.securityContext "component" .Values.pgwatch.postgres.securityContext) | nindent 6 }}
       restartPolicy: OnFailure
       containers:
         - name: db-init
+          {{- include "pgwatch.containerSecurityContext" (dict "global" .Values.securityContext "component" .Values.pgwatch.postgres.securityContext) | nindent 10 }}
           image: {{ (include "pgwatch.postgres.newPgDatabase.image" .) }}
           env:
             - name: PGHOST
