@@ -41,7 +41,9 @@ pgwatch:
 
   # == Core Settings ==
 
-  image: "docker.io/cybertecpostgresql/pgwatch:latest"
+  image:
+    repository: "docker.io/cybertecpostgresql/pgwatch"
+    tag: ""  # empty = defaults to .Chart.AppVersion
 
   # -- Resource requests and limits for the pgwatch deployment.
   resources: {}
