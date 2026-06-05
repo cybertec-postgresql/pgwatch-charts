@@ -41,7 +41,7 @@ pgwatch:
 
   # == Core Settings ==
 
-  image: "docker.io/cybertecpostgresql/pgwatch:latest"
+  image: "docker.io/cybertecpostgresql/pgwatch"
   # -- Web UI listen port. Must match PW_WEBADDR (default :8080). Used for containerPort and Service.
   webPort: 8080
 

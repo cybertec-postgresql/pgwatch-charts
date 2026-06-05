@@ -76,7 +76,7 @@ spec:
           envFrom:
             {{- toYaml . | nindent 12 }}
         {{- end }}
-          image: {{ .Values.pgwatch.image }}
+          image: {{ .Values.pgwatch.image }}:{{ .Chart.AppVersion }}
           volumeMounts:
           - name: launcher
             mountPath: /tmp/launcher.sh
