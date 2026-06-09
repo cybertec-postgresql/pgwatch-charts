@@ -46,6 +46,10 @@ spec:
         - name: db-init
           {{- include "pgwatch.containerSecurityContext" (dict "global" .Values.securityContext "component" .Values.pgwatch.postgres.securityContext) | nindent 10 }}
           image: {{ (include "pgwatch.postgres.newPgDatabase.image" .) }}
+          {{- with .Values.pgwatch.postgres.newPgDatabase.dbInitJob.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           env:
             - name: PGHOST
               value: {{ include "pgwatch.dbHost" . }}
