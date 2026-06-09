@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- The ability to manually specify `resources` blocks on managed workloads ([#30](https://github.com/cybertec-postgresql/pgwatch-charts/issues/30)).
+
 ### Fixed
 
 - `db-init` hook Job now honors `timescaledb.auth.secretKeys.adminPasswordKey` when TimescaleDB is enabled.
@@ -11,7 +15,6 @@
 ### Added
 
 - `seccompProfile.type: RuntimeDefault` in global `securityContext.pod` defaults when `securityContext.enabled=true` ([#31](https://github.com/cybertec-postgresql/pgwatch-charts/issues/31)).
-- The ability to manually specify `resources` blocks on managed workloads.([#30](https://github.com/cybertec-postgresql/pgwatch-charts/issues/30)).
 
 ### Fixed
 
