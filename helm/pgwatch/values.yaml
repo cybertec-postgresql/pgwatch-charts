@@ -133,11 +133,24 @@ pgwatch:
         size: '10Gi'
         storageClass: 'standard'
       # -- Resource requests and limits for the Metrics Database init job.
-      DbInitJob:
+      dbInitJob:
         resources: {}
+        # requests:
+        #   cpu: "25m"
+        #   memory: "64Mi"
+        # limits:
+        #   cpu: "200m"
+        #   memory: "128Mi"
+
       # -- Resource requests and limits for the Metrics Database initContainers.
       initContainers:
         resources: {}
+        # requests:
+        #   cpu: "10m"
+        #   memory: "16Mi"
+        # limits:
+        #   cpu: "100m"
+        #   memory: "64Mi"
 
     # -- External database connection (active when createMetricDatabase: false).
     # Set credentials via credentials.* below; username/password here are deprecated.

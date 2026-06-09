@@ -44,7 +44,7 @@ spec:
       containers:
         - name: db-init
           image: {{ (include "pgwatch.postgres.newPgDatabase.image" .) }}
-          {{- with .Values.pgwatch.postgres.newPgDatabase.DbInitJob.resources }}
+          {{- with .Values.pgwatch.postgres.newPgDatabase.dbInitJob.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}

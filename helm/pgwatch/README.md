@@ -342,6 +342,26 @@ Security contexts can be tuned at two levels:
 
 > See the [Local Development (Minikube)](#local-development-minikube) section for a concrete example of overriding security contexts when `fsGroup` is not applied by the cluster.
 
+### Resource Requests and Limits
+
+The managed workloads do not by default specify any certain resource requests and limits, but they can be manually set through the values file in the corresponding resources block for each workload/job, for example:
+
+```yaml
+pgwatch:
+  postgres:
+    # -- New PostgreSQL instance — active when createMetricDatabase: true.
+    newPgDatabase:
+      # -- Resource requests and limits for the Metrics Database init job.
+      dbInitJob:
+        resources:
+          requests:
+            cpu: "25m"
+            memory: "64Mi"
+          limits:
+            cpu: "200m"
+            memory: "128Mi"
+```
+
 ### Extra Resources
 
 `extraDeploy` allows you to deploy arbitrary Kubernetes resources alongside the chart (e.g. `ServiceMonitor`, additional `ConfigMap`, CRDs). Each entry is rendered via `tpl`, so Helm template expressions are supported.
