@@ -15,6 +15,8 @@ securityContext:
     runAsGroup: 1000
     fsGroup: 1000
     fsGroupChangePolicy: "OnRootMismatch"
+    seccompProfile:
+      type: RuntimeDefault
   # -- Container-level security context. https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#SecurityContext
   container:
     allowPrivilegeEscalation: false

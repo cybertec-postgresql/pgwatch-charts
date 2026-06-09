@@ -435,6 +435,15 @@ pgwatch.adminCredentialPasswordKey
 {{- end }}
 
 {{/*
+pgwatch.timescaledbAdminPasswordKey
+  Key containing the TimescaleDB postgres admin password.
+*/}}
+{{- define "pgwatch.timescaledbAdminPasswordKey" -}}
+{{- ((.Values.timescaledb.auth | default dict).secretKeys | default dict).adminPasswordKey
+    | default "postgres-password" -}}
+{{- end }}
+
+{{/*
 pgwatch.hasLegacyExternalDbInlineCredentials
   True when deprecated external DB username/password fields are still used.
 */}}
