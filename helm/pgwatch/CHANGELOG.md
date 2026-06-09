@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Breaking changes
+
+- `pgwatch.image` was changed from a string value to a structured object ([#39](https://github.com/cybertec-postgresql/pgwatch-charts/issues/39)).
+  - Previous: `pgwatch.image: "docker.io/cybertecpostgresql/pgwatch"`
+  - New: `pgwatch.image.repository` and `pgwatch.image.tag`
+  - An empty tag defaults to `.Chart.AppVersion`.
+  - Users overriding `pgwatch.image` should migrate to the new format.
+
 ### Added
 
 - The ability to manually specify `resources` blocks on managed workloads ([#30](https://github.com/cybertec-postgresql/pgwatch-charts/issues/30)).
@@ -24,11 +32,7 @@
 
 ### Breaking changes
 
-- `pgwatch.image` was changed from a string value to a structured object.
-  - Previous: `pgwatch.image: "docker.io/cybertecpostgresql/pgwatch"`
-  - New: `pgwatch.image.repository` and `pgwatch.image.tag`
-  - An empty tag defaults to `.Chart.AppVersion`.
-  - Users overriding `pgwatch.image` should migrate to the new format.
+- Standardized chart labels and selectors to Helm's recommended `app.kubernetes.io/*` schema ([#23](https://github.com/cybertec-postgresql/pgwatch-charts/issues/23)). Upgrades may require recreating Deployments/StatefulSets due to immutable selectors.
 
 ### Added
 

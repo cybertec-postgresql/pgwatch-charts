@@ -15,8 +15,3 @@ volume sizes and security adjustments.
 
 Also the templates are not automatically tested on new releases or other changes, so please report any abnormal findings.
 
-### Configuration
-
-
-| `pgwatch.image.repository` | pgwatch container image repository | `docker.io/cybertecpostgresql/pgwatch` |
-| `pgwatch.image.tag`        | pgwatch image tag (empty = Chart.AppVersion) | `""` |

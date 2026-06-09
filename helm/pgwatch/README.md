@@ -566,3 +566,21 @@ pgwatch:
       username: pgwatch_user
       password: change-me
 ```
+
+### pgwatch.image string to object migration
+
+`pgwatch.image` was changed from a plain string to a structured object in chart 4.0.0.
+
+Migrate your values as follows:
+
+```yaml
+# Old
+pgwatch:
+  image: "docker.io/cybertecpostgresql/pgwatch"
+
+# New
+pgwatch:
+  image:
+    repository: "docker.io/cybertecpostgresql/pgwatch"
+    tag: ""  # empty defaults to .Chart.AppVersion
+```
