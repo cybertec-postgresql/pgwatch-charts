@@ -69,3 +69,17 @@ Credential Secret:
 Postgres Admin Secret:
   kubectl get secret {{ include "pgwatch.adminCredentialSecretName" . }} -n {{ .Release.Namespace }} -o yaml
 {{- end }}
+
+{{- if kindIs "string" .Values.pgwatch.image }}
+WARNING:
+Detected legacy string value for pgwatch.image.
+
+Support for the plain string format is deprecated and will be removed in a future
+major release. Please migrate to the new structured format:
+
+  pgwatch:
+    image:
+      repository: "docker.io/cybertecpostgresql/pgwatch"
+      tag: ""  # empty defaults to .Chart.AppVersion
+
+{{- end }}

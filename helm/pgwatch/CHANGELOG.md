@@ -2,13 +2,10 @@
 
 ## [Unreleased]
 
-### Breaking changes
+### Deprecated
 
-- `pgwatch.image` was changed from a string value to a structured object ([#39](https://github.com/cybertec-postgresql/pgwatch-charts/issues/39)).
-  - Previous: `pgwatch.image: "docker.io/cybertecpostgresql/pgwatch"`
-  - New: `pgwatch.image.repository` and `pgwatch.image.tag`
-  - An empty tag defaults to `.Chart.AppVersion`.
-  - Users overriding `pgwatch.image` should migrate to the new format.
+- Plain string value for `pgwatch.image` in favor of the new structured format
+  with `pgwatch.image.repository` and `pgwatch.image.tag` fields ([#39](https://github.com/cybertec-postgresql/pgwatch-charts/issues/39)).
 
 ### Added
 

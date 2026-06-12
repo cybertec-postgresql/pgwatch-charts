@@ -569,7 +569,7 @@ pgwatch:
 
 ### pgwatch.image string to object migration
 
-`pgwatch.image` was changed from a plain string to a structured object in chart 4.0.0.
+`pgwatch.image` plain string format is deprecated and will be removed in a future release.
 
 Migrate your values as follows:
 
@@ -584,3 +584,5 @@ pgwatch:
     repository: "docker.io/cybertecpostgresql/pgwatch"
     tag: ""  # empty defaults to .Chart.AppVersion
 ```
+
+
