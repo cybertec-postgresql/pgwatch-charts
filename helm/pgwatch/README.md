@@ -584,5 +584,3 @@ pgwatch:
     repository: "docker.io/cybertecpostgresql/pgwatch"
     tag: ""  # empty defaults to .Chart.AppVersion
 ```
-
-
