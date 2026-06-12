@@ -5,6 +5,7 @@
 ### Added
 
 - The ability to manually specify `resources` blocks on managed workloads ([#30](https://github.com/cybertec-postgresql/pgwatch-charts/issues/30)).
+- `apiVersion: v1` and `kind: PersistentVolumeClaim` to the built-in PostgreSQL `volumeClaimTemplates` entry for better ArgoCD compatibility ([#43](https://github.com/cybertec-postgresql/pgwatch-charts/issues/43)).
 
 ### Fixed
 
