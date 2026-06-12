@@ -296,18 +296,19 @@ container can resolve the placeholders.
 
 Every component (`pgwatch`, `postgres`, `prometheus`, `grafana`) exposes two additional extension points:
 
-- **`env`** - inject plain key/value environment variables directly into the container:
+- **`env`** — inject plain key/value environment variables directly into the container. Values provided here are **merged with the chart's built-in defaults**, and user-supplied values always take precedence:
 
   ```yaml
   pgwatch:
     env:
       PW_LOGLEVEL: "debug"
+      METRIC_DATABASE_PORT: "5433"   # overrides the chart default of 5432
   grafana:
     env:
       GF_SERVER_ROOT_URL: "https://grafana.example.com"
   ```
 
-- **`envFrom`** - source environment variables from existing ConfigMaps or Secrets:
+- **`envFrom`** — source environment variables from existing ConfigMaps or Secrets. Explicit `env` entries (both chart defaults and user-supplied values) take precedence over `envFrom` when the same key appears in both:
 
   ```yaml
   pgwatch:
@@ -315,6 +316,22 @@ Every component (`pgwatch`, `postgres`, `prometheus`, `grafana`) exposes two add
       - secretRef:
           name: my-pgwatch-secret
   ```
+
+#### Reserved env keys
+
+The following keys are managed by the chart via `secretKeyRef` and **cannot** be set through `.Values.<component>.env`. Attempting to do so causes the chart to fail with a descriptive error pointing to the correct value path.
+
+| Component | Reserved key | Configure via |
+| --- | --- | --- |
+| `pgwatch` | `PGWATCH_USER` | `pgwatch.postgres.credentials.existingSecret` + `.usernameKey` |
+| `pgwatch` | `PGWATCH_USER_PASSWORD` | `pgwatch.postgres.credentials.existingSecret` + `.passwordKey` |
+| `grafana` | `GF_DATABASE_USER` | `pgwatch.postgres.credentials.existingSecret` + `.usernameKey` |
+| `grafana` | `GF_DATABASE_PASSWORD` | `pgwatch.postgres.credentials.existingSecret` + `.passwordKey` |
+| `grafana` | `PGWATCH_METRICS_DS_USER` | `pgwatch.postgres.credentials.existingSecret` + `.usernameKey` |
+| `grafana` | `PGWATCH_METRICS_DS_PASSWORD` | `pgwatch.postgres.credentials.existingSecret` + `.passwordKey` |
+| `postgres` | `POSTGRES_PASSWORD` | `pgwatch.postgres.adminCredentials.existingSecret` + `.passwordKey` |
+
+See [Credential Management](#credential-management) for details on configuring these values.
 
 ### Security Contexts
 
@@ -360,7 +377,7 @@ The managed workloads do not by default specify any certain resource requests an
 ```yaml
 pgwatch:
   postgres:
-    # -- New PostgreSQL instance — active when createMetricDatabase: true.
+    # -- New PostgreSQL instance - active when createMetricDatabase: true.
     newPgDatabase:
       # -- Resource requests and limits for the Metrics Database init job.
       dbInitJob:
