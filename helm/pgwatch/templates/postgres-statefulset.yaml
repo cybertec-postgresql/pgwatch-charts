@@ -84,7 +84,9 @@ spec:
         - name: pgdata
           mountPath: /pgdata
   volumeClaimTemplates:
-  - metadata:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
       name: pgdata
       labels:
         {{- include "pgwatch.commonLabels" (dict "root" . "component" "postgres") | nindent 8 }}
