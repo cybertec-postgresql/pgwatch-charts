@@ -15,6 +15,8 @@
 ### Fixed
 
 - `db-init` hook Job now honors `timescaledb.auth.secretKeys.adminPasswordKey` when TimescaleDB is enabled.
+- Duplicate env entries no longer appear when a user-supplied key in `.Values.<component>.env` matches a chart-managed default; user values now take precedence via merge ([#41](https://github.com/cybertec-postgresql/pgwatch-charts/issues/41)).
+- Setting a credential-backed reserved env key (`PGWATCH_USER`, `PGWATCH_USER_PASSWORD`, `GF_DATABASE_USER`, `GF_DATABASE_PASSWORD`, `PGWATCH_METRICS_DS_USER`, `PGWATCH_METRICS_DS_PASSWORD`, `POSTGRES_PASSWORD`) via `.Values.<component>.env` now fails immediately with a descriptive error pointing to the correct credential value path ([#41](https://github.com/cybertec-postgresql/pgwatch-charts/issues/41)).
 
 ## [4.0.1] – 2026-05-26
 

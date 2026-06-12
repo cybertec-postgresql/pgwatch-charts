@@ -104,11 +104,12 @@ pgwatch:
     container: {}
 
   # -- Additional environment variables for the pgwatch container.
-  # Each entry is injected as a plain key/value env var.
+  # Merged with chart defaults; user-supplied values take precedence.
   # Example:
   #   env:
   #     PW_LOGLEVEL: "debug"
   #     PW_WEBBASEPATH: "/pgwatch"
+  #     METRIC_DATABASE_PORT: "5433"
   env: {}
   # -- Inject env vars from existing ConfigMaps or Secrets.
   # Example:
@@ -202,6 +203,7 @@ pgwatch:
       container: {}
 
     # -- Additional environment variables for the postgres container.
+    # Merged with chart defaults; user-supplied values take precedence.
     # Example:
     #   env:
     #     POSTGRES_MAX_CONNECTIONS: "200"
@@ -292,6 +294,7 @@ pgwatch:
       container: {}
 
     # -- Additional environment variables for the grafana container.
+    # Merged with chart defaults; user-supplied values take precedence.
     # Example:
     #   env:
     #     GF_SERVER_ROOT_URL: "https://grafana.example.com"
