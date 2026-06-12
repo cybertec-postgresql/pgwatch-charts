@@ -14,3 +14,4 @@ additional customizations, like minimally using the most recent Docker image ver
 volume sizes and security adjustments.
 
 Also the templates are not automatically tested on new releases or other changes, so please report any abnormal findings.
+

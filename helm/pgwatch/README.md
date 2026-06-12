@@ -566,3 +566,21 @@ pgwatch:
       username: pgwatch_user
       password: change-me
 ```
+
+### pgwatch.image string to object migration
+
+`pgwatch.image` plain string format is deprecated and will be removed in a future release.
+
+Migrate your values as follows:
+
+```yaml
+# Old
+pgwatch:
+  image: "docker.io/cybertecpostgresql/pgwatch"
+
+# New
+pgwatch:
+  image:
+    repository: "docker.io/cybertecpostgresql/pgwatch"
+    tag: ""  # empty defaults to .Chart.AppVersion
+```

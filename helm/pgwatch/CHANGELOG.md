@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Deprecated
+
+- Plain string value for `pgwatch.image` in favor of the new structured format
+  with `pgwatch.image.repository` and `pgwatch.image.tag` fields ([#39](https://github.com/cybertec-postgresql/pgwatch-charts/issues/39)).
+
 ### Added
 
 - The ability to manually specify `resources` blocks on managed workloads ([#30](https://github.com/cybertec-postgresql/pgwatch-charts/issues/30)).
