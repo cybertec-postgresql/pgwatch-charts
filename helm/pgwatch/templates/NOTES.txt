@@ -57,19 +57,6 @@ Please migrate to one of the new secret-backed options:
   - pgwatch.postgres.credentials.existingSecret
 {{- end }}
 
-{{- if or (include "pgwatch.isTrue" (include "pgwatch.postgres.createMetricDatabase" .))
-          (include "pgwatch.postgres.hasUseExistingDatabase" .) }}
-
-Credential Secret:
-  kubectl get secret {{ include "pgwatch.credentialSecretName" . }} -n {{ .Release.Namespace }} -o yaml
-{{- end }}
-
-{{- if and (include "pgwatch.isTrue" (include "pgwatch.postgres.createMetricDatabase" .))
-          (not .Values.timescaledb.enabled) }}
-Postgres Admin Secret:
-  kubectl get secret {{ include "pgwatch.adminCredentialSecretName" . }} -n {{ .Release.Namespace }} -o yaml
-{{- end }}
-
 {{- if kindIs "string" .Values.pgwatch.image }}
 WARNING:
 Detected legacy string value for pgwatch.image.
@@ -82,4 +69,17 @@ major release. Please migrate to the new structured format:
       repository: "docker.io/cybertecpostgresql/pgwatch"
       tag: ""  # empty defaults to .Chart.AppVersion
 
+{{- end }}
+
+{{- if or (include "pgwatch.isTrue" (include "pgwatch.postgres.createMetricDatabase" .))
+          (include "pgwatch.postgres.hasUseExistingDatabase" .) }}
+
+Credential Secret:
+  kubectl get secret {{ include "pgwatch.credentialSecretName" . }} -n {{ .Release.Namespace }} -o yaml
+{{- end }}
+
+{{- if and (include "pgwatch.isTrue" (include "pgwatch.postgres.createMetricDatabase" .))
+          (not .Values.timescaledb.enabled) }}
+Postgres Admin Secret:
+  kubectl get secret {{ include "pgwatch.adminCredentialSecretName" . }} -n {{ .Release.Namespace }} -o yaml
 {{- end }}
