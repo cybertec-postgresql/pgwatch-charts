@@ -1,0 +1,46 @@
+# Values file demonstrating env-var merge precedence (merge-env-vars branch,
+# see _pgwatch-env.tpl / _postgres-env.tpl / _grafana-env.tpl).
+#
+# Each component's `.env` map is merged with the chart's built-in defaults.
+# A key already present in the chart defaults is OVERRIDDEN by the value
+# given here; a key that doesn't exist in the defaults is simply ADDED.
+#
+# Verify with:
+#   helm template pgwatch . -f test_scenarios/env-merge-override.yaml \
+#     --show-only templates/pgwatch-deployment.yaml
+#   helm template pgwatch . -f test_scenarios/env-merge-override.yaml \
+#     --show-only templates/postgres-statefulset.yaml
+#   helm template pgwatch . -f test_scenarios/env-merge-override.yaml \
+#     --show-only templates/grafana-deployment.yaml
+#
+# Expected results:
+#   - pgwatch:  METRIC_DATABASE_PORT       -> "5433" (chart default is "5432")
+#               PW_LOGLEVEL                -> "debug" (new key, no chart default)
+#   - postgres: POSTGRES_USER              -> "pgwatch_admin" (chart default is "postgres")
+#               POSTGRES_MAX_CONNECTIONS   -> "200" (new key, no chart default)
+#   - grafana:  GF_AUTH_ANONYMOUS_ORG_ROLE -> "Viewer" (chart default is "Admin")
+#               GF_LOG_LEVEL               -> "warn" (new key, no chart default)
+# In every case there must be exactly ONE env entry per key (no duplicates).
+
+pgwatch:
+  env:
+    METRIC_DATABASE_PORT: "5433"   # overrides chart default "5432"
+    PW_LOGLEVEL: "debug"           # new key, no chart default
+
+  postgres:
+    credentials:
+      username: pgwatch
+      password: pgwatchtest
+    adminCredentials:
+      password: pgwatchadmin
+
+    env:
+      POSTGRES_USER: "pgwatch_admin"        # overrides chart default "postgres"
+      POSTGRES_MAX_CONNECTIONS: "200"       # new key, no chart default
+
+  grafana:
+    useSubchart: false
+    enableGrafana: true
+    env:
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"  # overrides chart default "Admin"
+      GF_LOG_LEVEL: "warn"                  # new key, no chart default

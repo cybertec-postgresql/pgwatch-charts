@@ -1,0 +1,45 @@
+# Verifies that explicit `env` entries (chart defaults AND user-supplied
+# values) take precedence over `envFrom` when the same key appears in both.
+#
+# This is native Kubernetes container behavior, not something the chart's
+# merge helpers implement directly — env vars listed explicitly under
+# `env:` always win over same-named vars sourced via `envFrom:`, regardless
+# of list order. `helm template` only proves the manifest contains both
+# pieces; the actual precedence can only be observed on a running pod.
+#
+# This file is self-contained: extraDeploy creates the colliding ConfigMap
+# so no separate `kubectl apply` step is needed.
+#
+# Steps:
+#   helm install pgwatch-envfrom-test . -n pgwatch-envfrom-test \
+#     --create-namespace -f test_scenarios/env-merge-envfrom-precedence.yaml
+#   kubectl exec -n pgwatch-envfrom-test deploy/pgwatch -- printenv PW_LOGLEVEL
+#
+# Expected: prints "debug" (the explicit env value), never "info" (the
+# envFrom/ConfigMap value).
+#
+# Teardown:
+#   helm uninstall pgwatch-envfrom-test -n pgwatch-envfrom-test
+#   kubectl delete namespace pgwatch-envfrom-test
+
+extraDeploy:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: pgwatch-envfrom-test
+    data:
+      PW_LOGLEVEL: "info"   # should be shadowed by the explicit env value below
+
+pgwatch:
+  envFrom:
+    - configMapRef:
+        name: pgwatch-envfrom-test
+  env:
+    PW_LOGLEVEL: "debug"    # explicit value; must win over envFrom's "info"
+
+  postgres:
+    credentials:
+      username: pgwatch
+      password: pgwatchtest
+    adminCredentials:
+      password: pgwatchadmin

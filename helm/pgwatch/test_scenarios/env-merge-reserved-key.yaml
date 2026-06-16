@@ -1,0 +1,42 @@
+# Negative test for the reserved env-key guard introduced on merge-env-vars.
+#
+# Reserved keys are backed by secretKeyRef and managed by the chart; setting
+# them via .Values.<component>.env must fail the render with a descriptive
+# `fail` message pointing at the correct credential value path.
+#
+# As shipped, this file sets the pgwatch-component reserved key PGWATCH_USER.
+# Run:
+#   helm template pgwatch . -f test_scenarios/env-merge-reserved-key.yaml
+#
+# Expected: the render FAILS with an error similar to:
+#   execution error ... pgwatch.env: "PGWATCH_USER" is reserved and managed
+#   by the chart; set .Values.pgwatch.postgres.credentials.existingSecret and
+#   .Values.pgwatch.postgres.credentials.usernameKey instead
+#
+# To exercise the other components' reserved keys, comment out the pgwatch
+# block below and uncomment one of the alternate blocks instead (only one
+# reserved-key violation is needed per run; the chart fails fast on the first
+# one it finds).
+
+pgwatch:
+  env:
+    PGWATCH_USER: "should-fail"
+    #PGWATCH_USER_PASSWORD: "should-fail"
+
+  postgres:
+    credentials:
+      username: pgwatch
+      password: pgwatchtest
+    adminCredentials:
+      password: pgwatchadmin
+    # env:
+    #   POSTGRES_PASSWORD: "should-fail"
+
+  grafana:
+    useSubchart: false
+    enableGrafana: true
+    # env:
+    #   GF_DATABASE_USER: "should-fail"
+    #   GF_DATABASE_PASSWORD: "should-fail"
+    #   PGWATCH_METRICS_DS_USER: "should-fail"
+    #   PGWATCH_METRICS_DS_PASSWORD: "should-fail"
