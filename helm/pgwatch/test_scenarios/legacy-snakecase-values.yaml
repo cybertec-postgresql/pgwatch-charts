@@ -1,0 +1,52 @@
+# Verifies the legacy snake_case value-key fallback (renamed to camelCase).
+# Uses native YAML booleans throughout — only the KEY names are legacy here,
+# not the value types — to isolate this single deprecation from the
+# string-boolean fallback (see legacy-bool-values.yaml for that one).
+#
+# Built-in PostgreSQL credentials are set so the render succeeds.
+#
+# Verify with:
+#   helm install pgwatch . -n pgwatch-legacy-test --create-namespace \
+#     -f test_scenarios/legacy-snakecase-values.yaml --dry-run --debug
+#
+# Expected: the render SUCCEEDS, and NOTES.txt prints exactly ONE WARNING
+# block: "Detected legacy snake_case values" — no string-boolean, inline
+# credential, or image-string warnings should appear.
+
+pgwatch:
+  postgres:
+    enable_pg_sink: true
+    settings:
+      retention_days: 7
+    create_metric_database: true
+
+    # Required once new_pg_database is present at all: the helper that
+    # resolves the StatefulSet image/volume swaps to this snake_case block
+    # entirely (no per-field fallback to the camelCase chart defaults), so
+    # these values must be supplied explicitly here.
+    new_pg_database:
+      image: "docker.io/postgres:18.3-alpine3.23"
+      volume:
+        size: "10Gi"
+        storageClass: "standard"
+
+    credentials:
+      username: pgwatch
+      password: pgwatchtest
+    adminCredentials:
+      password: pgwatchadmin
+
+  prometheus:
+    enable_prom_sink: true
+    new_prometheus:
+      # Keep false: this disables the Prometheus Deployment, keeping the
+      # scenario focused on the snake_case fallback rather than a full
+      # deploy. No other new_prometheus fields are needed since the
+      # Prometheus Deployment/Config/Alert templates are skipped entirely.
+      create_prometheus: false
+
+  grafana:
+    enable_grafana: true
+    enable_datasources:
+      postgres: true
+      prometheus: true

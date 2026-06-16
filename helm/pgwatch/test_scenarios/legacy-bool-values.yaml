@@ -1,0 +1,39 @@
+# Verifies the legacy string-boolean fallback ("true"/"false" instead of
+# native YAML booleans). Uses camelCase keys throughout — only the VALUE
+# type is legacy here, not the key names — to isolate this single
+# deprecation from the snake_case key fallback (see
+# legacy-snakecase-values.yaml for that one).
+#
+# Built-in PostgreSQL credentials are set so the render succeeds.
+#
+# Verify with:
+#   helm install pgwatch . -n pgwatch-legacy-test --create-namespace \
+#     -f test_scenarios/legacy-bool-values.yaml --dry-run --debug
+#
+# Expected: the render SUCCEEDS, and NOTES.txt prints exactly ONE WARNING
+# block: "Detected legacy string boolean values" — no snake_case, inline
+# credential, or image-string warnings should appear.
+
+pgwatch:
+  postgres:
+    enablePgSink: "true"
+    createMetricDatabase: "true"
+
+    credentials:
+      username: pgwatch
+      password: pgwatchtest
+    adminCredentials:
+      password: pgwatchadmin
+
+  prometheus:
+    enablePromSink: "true"
+    newPrometheus:
+      # Keep "false": this disables the Prometheus Deployment, keeping the
+      # scenario focused on the boolean fallback rather than a full deploy.
+      createPrometheus: "false"
+
+  grafana:
+    enableGrafana: "true"
+    enableDatasources:
+      postgres: "true"
+      prometheus: "true"

@@ -1,0 +1,32 @@
+# Verifies the deprecated plain-string pgwatch.image fallback (replacement
+# is the structured { repository, tag } format introduced when image was
+# split into separate fields, see CHANGELOG.md "Deprecated"). Everything
+# else uses current camelCase keys and native booleans, to isolate this
+# single deprecation from the others.
+#
+# Built-in PostgreSQL credentials are set so the render succeeds.
+#
+# Verify with:
+#   helm install pgwatch . -n pgwatch-legacy-test --create-namespace \
+#     -f test_scenarios/legacy-image-string-values.yaml --dry-run --debug
+#
+# Expected: the render SUCCEEDS, and NOTES.txt prints exactly ONE WARNING
+# block: "Detected legacy string value for pgwatch.image" — no
+# string-boolean, snake_case, or inline-credential warnings should appear.
+#
+# `helm template`/`helm install` also print a benign Helm-internal notice:
+#   coalesce.go: warning: cannot overwrite table with non table for
+#   pgwatch.pgwatch.image (map[repository:... tag:])
+# This is expected noise from overriding the structured image default with
+# a plain string — exactly the deprecated behavior under test — and is
+# unrelated to the WARNING block above.
+
+pgwatch:
+  image: "docker.io/cybertecpostgresql/pgwatch"
+
+  postgres:
+    credentials:
+      username: pgwatch
+      password: pgwatchtest
+    adminCredentials:
+      password: pgwatchadmin
