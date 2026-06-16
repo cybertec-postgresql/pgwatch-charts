@@ -63,19 +63,7 @@ spec:
         - containerPort: 5432
           name: postgres
         env:
-        - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: {{ include "pgwatch.adminCredentialSecretName" . }}
-              key: {{ include "pgwatch.adminCredentialPasswordKey" . }}
-        - name: POSTGRES_USER
-          value: postgres
-        - name: PGDATA
-          value: /pgdata/data
-        {{- range $key, $value := .Values.pgwatch.postgres.env }}
-        - name: {{ $key }}
-          value: {{ $value | quote }}
-        {{- end }}
+          {{- include "pgwatch.postgres.env" . | nindent 8 }}
         {{- with .Values.pgwatch.postgres.envFrom }}
         envFrom:
           {{- toYaml . | nindent 10 }}

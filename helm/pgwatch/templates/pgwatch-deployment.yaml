@@ -18,60 +18,7 @@ spec:
       {{- include "pgwatch.podSecurityContext" (dict "global" .Values.securityContext "component" .Values.pgwatch.securityContext) | nindent 6 }}
       containers:
         - env:
-          - name: PGWATCH_USER
-            valueFrom:
-              secretKeyRef:
-                name: {{ include "pgwatch.credentialSecretName" . }}
-                key: {{ include "pgwatch.credentialUsernameKey" . }}
-          - name: PGWATCH_USER_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: {{ include "pgwatch.credentialSecretName" . }}
-                key: {{ include "pgwatch.credentialPasswordKey" . }}
-        {{- if include "pgwatch.isTrue" (include "pgwatch.postgres.createMetricDatabase" .) }}
-          - name: METRIC_DATABASE_ENDPOINT
-            value: "{{ include "pgwatch.dbHost" . }}.{{ .Release.Namespace }}.svc.cluster.local"
-          - name: METRIC_DATABASE_PORT
-            value: "5432"
-          - name: METRIC_DATABASE_DATABASE
-            value: pgwatch_metrics
-          - name: METRIC_DATABASE_SSLMODE
-            value: disable
-        {{- else if (include "pgwatch.postgres.hasUseExistingDatabase" .) }}
-          - name: METRIC_DATABASE_ENDPOINT
-            value: {{ (include "pgwatch.postgres.useExistingDatabase.endpoint" .) }}
-          - name: METRIC_DATABASE_PORT
-            value: "{{ (include "pgwatch.postgres.useExistingDatabase.port" .) }}"
-          - name: METRIC_DATABASE_DATABASE
-            value: {{ (include "pgwatch.postgres.useExistingDatabase.database" .) }}
-          - name: METRIC_DATABASE_SSLMODE
-            value: {{ (include "pgwatch.postgres.useExistingDatabase.sslmode" .) }}
-        {{ end }}
-        {{- if include "pgwatch.isTrue" (include "pgwatch.postgres.enablePgSink" .) }}
-          - name: PG_IS_SINK
-            value: "true"
-          - name: PG_RETENTION_DAYS
-            value: "{{ (include "pgwatch.postgres.settings.retentionDays" .) }} days"
-        {{ end }}
-        {{- if include "pgwatch.isTrue" (include "pgwatch.prometheus.enablePromSink" .) }}
-          - name: PROM_IS_SINK
-            value: "true"
-        {{ end }}
-        {{- if and .Values.pgwatch.ingress.enabled .Values.pgwatch.ingress.webBasePath }}
-          - name: PW_WEBBASEPATH
-            value: {{ .Values.pgwatch.ingress.webBasePath | quote }}
-        {{- end }}
-        {{- range $key, $value := .Values.pgwatch.env }}
-          - name: {{ $key }}
-            value: {{ $value | quote }}
-        {{- end }}
-        {{- if .Values.pgwatch.sources.files }}
-          - name: PW_SOURCES
-            value: "/tmp/pgwatch-sources"
-        {{- else }}
-          - name: PW_SOURCES
-            value: "postgresql://$(PGWATCH_USER):$(PGWATCH_USER_PASSWORD)@$(METRIC_DATABASE_ENDPOINT):$(METRIC_DATABASE_PORT)/$(METRIC_DATABASE_DATABASE)?sslmode=$(METRIC_DATABASE_SSLMODE)"
-        {{- end }}
+          {{- include "pgwatch.pgwatch.env" . | nindent 10 }}
         {{- with .Values.pgwatch.envFrom }}
           envFrom:
             {{- toYaml . | nindent 12 }}
