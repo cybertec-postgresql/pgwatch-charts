@@ -1,0 +1,30 @@
+# Full-stack: built-in PostgreSQL sink, Prometheus, Grafana (custom Deployment).
+# Deploy: make deploy SCENARIO=builtin-postgres-sink
+
+pgwatch:
+  env:
+    PW_LOGLEVEL: "debug"
+
+  postgres:
+    enablePgSink: true
+    createMetricDatabase: true
+    settings:
+      retentionDays: 7
+    credentials:
+      username: pgwatch
+      password: pgwatchtest
+    adminCredentials:
+      password: pgwatchadmin
+
+  prometheus:
+    enablePromSink: true
+    newPrometheus:
+      createPrometheus: true
+      settings:
+        retentionDays: 7
+      volume:
+        size: '2Gi'
+
+  grafana:
+    useSubchart: false
+    enableGrafana: true

@@ -1,0 +1,47 @@
+# Full-stack: TimescaleDB sink, Prometheus, official Grafana subchart.
+# Requires both subcharts: helm dependency update helm/pgwatch
+# Deploy: make deploy SCENARIO=grafana-subchart-timescaledb
+
+pgwatch:
+  env:
+    PW_LOGLEVEL: "debug"
+
+  postgres:
+    enablePgSink: true
+    settings:
+      retentionDays: 7
+    # credentials is still required: pgwatch app user connecting to TimescaleDB.
+    credentials:
+      username: pgwatch
+      password: pgwatchtest
+    # adminCredentials is ignored when timescaledb.enabled: true;
+    # set the TimescaleDB admin password via timescaledb.auth.postgresPassword instead.
+
+  prometheus:
+    enablePromSink: true
+    newPrometheus:
+      createPrometheus: true
+      settings:
+        retentionDays: 7
+      volume:
+        size: '2Gi'
+
+  grafana:
+    useSubchart: true
+    enableGrafana: true
+
+grafana:
+  envValueFrom:
+    PGWATCH_METRICS_DS_USER:
+      secretKeyRef:
+        name: pgwatch-postgresql-secret-pgwatch
+        key: username
+    PGWATCH_METRICS_DS_PASSWORD:
+      secretKeyRef:
+        name: pgwatch-postgresql-secret-pgwatch
+        key: password
+
+timescaledb:
+  enabled: true
+  auth:
+    postgresPassword: pgwatchadmin

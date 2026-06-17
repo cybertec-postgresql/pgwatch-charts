@@ -1,0 +1,42 @@
+# Full-stack: built-in PostgreSQL sink, Prometheus, official Grafana subchart.
+# Requires subchart: helm dependency update helm/pgwatch
+# Deploy: make deploy SCENARIO=grafana-subchart-builtin-postgres
+
+pgwatch:
+  env:
+    PW_LOGLEVEL: "debug"
+
+  postgres:
+    enablePgSink: true
+    createMetricDatabase: true
+    settings:
+      retentionDays: 7
+    credentials:
+      username: pgwatch
+      password: pgwatchtest
+    adminCredentials:
+      password: pgwatchadmin
+
+  prometheus:
+    enablePromSink: true
+    newPrometheus:
+      createPrometheus: true
+      settings:
+        retentionDays: 7
+      volume:
+        size: '2Gi'
+
+  grafana:
+    useSubchart: true
+    enableGrafana: true
+
+grafana:
+  envValueFrom:
+    PGWATCH_METRICS_DS_USER:
+      secretKeyRef:
+        name: pgwatch-postgresql-secret-pgwatch
+        key: username
+    PGWATCH_METRICS_DS_PASSWORD:
+      secretKeyRef:
+        name: pgwatch-postgresql-secret-pgwatch
+        key: password
