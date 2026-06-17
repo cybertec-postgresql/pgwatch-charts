@@ -1,0 +1,77 @@
+# Verifies the global securityContext baseline merge logic:
+#   - When securityContext.enabled: true, the global pod/container baseline is
+#     applied to all components.
+#   - Per-component securityContext values are merged on top; component wins on
+#     any key that appears in both.
+#
+# This file sets a global baseline and then overrides specific fields per
+# component to confirm the merge produces the expected result.
+#
+# Verify with:
+#   helm template pgwatch . \
+#     -f test_scenarios/template-checks/security-context-global-baseline.yaml \
+#     --show-only templates/pgwatch-deployment.yaml \
+#     | grep -A20 'securityContext'
+#
+# Expected for pgwatch pod: runAsUser is 1001 (component override wins over
+# global 1000); all other global pod fields (runAsNonRoot, fsGroup, etc.) are
+# inherited from the global baseline.
+#
+#   helm template pgwatch . \
+#     -f test_scenarios/template-checks/security-context-global-baseline.yaml \
+#     --show-only templates/postgres-statefulset.yaml \
+#     | grep -A20 'securityContext'
+#
+# Expected for postgres pod: runAsUser is 0, runAsNonRoot is false (component
+# override wins); readOnlyRootFilesystem is false and capabilities.drop is []
+# (component container override wins over global).
+
+securityContext:
+  enabled: true
+  pod:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    fsGroupChangePolicy: "OnRootMismatch"
+    seccompProfile:
+      type: RuntimeDefault
+  container:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+
+pgwatch:
+  securityContext:
+    pod:
+      runAsUser: 1001  # overrides global 1000; all other global pod fields inherited
+    container: {}
+
+  postgres:
+    credentials:
+      username: pgwatch
+      password: pgwatchtest
+    adminCredentials:
+      password: pgwatchadmin
+
+    # Postgres image starts as root — override the global baseline entirely for
+    # this component to allow the image entrypoint to set up the data directory.
+    securityContext:
+      pod:
+        runAsUser: 0
+        runAsGroup: 0
+        fsGroup: 999
+        runAsNonRoot: false
+      container:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+        capabilities:
+          drop: []
+
+  prometheus:
+    enablePromSink: false  # not the focus; keeps the render minimal
+
+  grafana:
+    enableGrafana: false   # not the focus; keeps the render minimal

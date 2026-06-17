@@ -1,0 +1,42 @@
+# Verifies that enabling Ingress with a webBasePath renders the Ingress resource
+# correctly and injects PW_WEBBASEPATH into the pgwatch container env.
+#
+# Verify with:
+#   helm template pgwatch . \
+#     -f test_scenarios/template-checks/ingress-subpath.yaml \
+#     --show-only templates/ingress.yaml
+#
+# Expected: an Ingress resource with the host and path configured below,
+# ingressClassName set to "nginx", and a matching pathType: Prefix rule.
+#
+# Also confirm PW_WEBBASEPATH is injected into the pgwatch Deployment:
+#   helm template pgwatch . \
+#     -f test_scenarios/template-checks/ingress-subpath.yaml \
+#     --show-only templates/pgwatch-deployment.yaml \
+#     | grep -A1 'PW_WEBBASEPATH'
+#
+# Expected: PW_WEBBASEPATH value is "/pgwatch".
+
+pgwatch:
+  ingress:
+    enabled: true
+    className: "nginx"
+    hosts:
+      - host: pgwatch.example.com
+        paths:
+          - path: /pgwatch
+            pathType: Prefix
+    webBasePath: "/pgwatch"
+
+  postgres:
+    credentials:
+      username: pgwatch
+      password: pgwatchtest
+    adminCredentials:
+      password: pgwatchadmin
+
+  prometheus:
+    enablePromSink: false  # not the focus; keeps the render minimal
+
+  grafana:
+    enableGrafana: false   # not the focus; keeps the render minimal

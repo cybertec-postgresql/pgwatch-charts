@@ -1,0 +1,31 @@
+# Verifies that setting enablePromSink: false renders no Prometheus resources
+# (Deployment, Service, PVC, ConfigMap, alert config).
+#
+# Verify with:
+#   helm template pgwatch . \
+#     -f test_scenarios/template-checks/prometheus-sink-disabled.yaml \
+#     --show-only templates/prometheus-deployment.yaml
+#
+# Expected: empty output — no Prometheus Deployment rendered.
+#
+# Also confirm no prometheus env vars appear in the pgwatch Deployment:
+#   helm template pgwatch . \
+#     -f test_scenarios/template-checks/prometheus-sink-disabled.yaml \
+#     --show-only templates/pgwatch-deployment.yaml \
+#     | grep -i prom
+#
+# Expected: no PW_PROMETHEUS_* or PROMETHEUS_* entries in the pgwatch container env.
+
+pgwatch:
+  postgres:
+    credentials:
+      username: pgwatch
+      password: pgwatchtest
+    adminCredentials:
+      password: pgwatchadmin
+
+  prometheus:
+    enablePromSink: false
+
+  grafana:
+    enableGrafana: false  # not the focus; keeps the render minimal
