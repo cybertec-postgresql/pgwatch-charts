@@ -2,7 +2,7 @@ apiVersion: v2
 appVersion: "5.2"
 description: A Helm chart for pgwatch monitoring tools
 name: pgwatch
-version: 4.0.1
+version: 4.1.0
 
 dependencies:
   # TimescaleDB subchart — opt-in replacement for the built-in PostgreSQL StatefulSet.
