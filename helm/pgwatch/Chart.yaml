@@ -15,6 +15,6 @@ dependencies:
   # Official Grafana subchart — opt-in replacement for the custom Grafana Deployment.
   # Activate with: pgwatch.grafana.useSubchart: true
   - name: grafana
-    version: "10.5.15"
+    version: "12.4.8"
     repository: "oci://ghcr.io/grafana-community/helm-charts"
     condition: pgwatch.grafana.useSubchart
