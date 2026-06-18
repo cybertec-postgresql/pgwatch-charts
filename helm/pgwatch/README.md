@@ -23,7 +23,7 @@ Grafana components, and it supports optional TimescaleDB and Grafana subcharts.
   - [Extra Resources](#extra-resources)
 - [Kubernetes Labels and Selectors](#kubernetes-labels-and-selectors)
 - [Helm Dependencies](#helm-dependencies)
-- [Local Development (Minikube)](#local-development-minikube)
+- [Local Development](#local-development)
 - [Migration Reference](#migration-reference)
 
 ## Quick Start
@@ -368,7 +368,7 @@ Security contexts can be tuned at two levels:
         allowPrivilegeEscalation: false
   ```
 
-> See the [Local Development (Minikube)](#local-development-minikube) section for a concrete example of overriding security contexts when `fsGroup` is not applied by the cluster.
+> See the [Minikube](#minikube) section for a concrete example of overriding security contexts when `fsGroup` is not applied by the cluster.
 
 ### Resource Requests and Limits
 
@@ -492,42 +492,34 @@ grafana:
 
 ---
 
-## Local Development (Minikube)
+## Local Development
+
+The repository includes ready-made values files for common deployment scenarios
+under [`helm/pgwatch/test_scenarios/`](test_scenarios/README.md). A `Makefile`
+at the repository root wraps the deploy/portforward/teardown workflow:
+
+```sh
+make deploy              SCENARIO=builtin-postgres-sink
+make portforward-pgwatch SCENARIO=builtin-postgres-sink
+make portforward-grafana SCENARIO=builtin-postgres-sink
+make teardown            SCENARIO=builtin-postgres-sink
+make status
+```
+
+Run `make` (no target) to list available scenarios.
+
+### Minikube
 
 The `postgres` and `timescaledb` images are designed to start as root, set up the data directory, and then drop to the postgres user (uid 999). The chart defaults leave the security context empty so clusters that properly apply `fsGroup` volume ownership can run those images as non-root.
 
-On **Minikube**, `fsGroup` may not be applied before the container starts, causing a `Permission denied` error when the image tries to create the data directory. Override the security context in your values file to let the images handle their own permissions:
+On **Minikube**, `fsGroup` may not be applied before the container starts, causing a `Permission denied` error when the image tries to create the data directory. Override the security context to let the images handle their own permissions.
 
-```yaml
-# pgwatch.postgres
-pgwatch:
-  postgres:
-    securityContext:
-      pod:
-        runAsUser: 0
-        runAsGroup: 0
-        fsGroup: 999
-        runAsNonRoot: false
-      container:
-        allowPrivilegeEscalation: false
-        readOnlyRootFilesystem: false
-        capabilities:
-          drop: []
+A ready-made overlay is provided at [`test_scenarios/deployment/overlays/minikube-securitycontext.yaml`](test_scenarios/deployment/overlays/minikube-securitycontext.yaml). When using the Makefile it is applied automatically (`MINIKUBE=true` is the default). To apply it manually:
 
-# timescaledb subchart (when timescaledb.enabled: true)
-timescaledb:
-  podSecurityContext:
-    runAsUser: 0
-    runAsGroup: 0
-    fsGroup: 999
-  containerSecurityContext:
-    runAsUser: 0
-    runAsGroup: 0
-    runAsNonRoot: false
-    allowPrivilegeEscalation: false
-    readOnlyRootFilesystem: false
-    capabilities:
-      drop: []
+```sh
+helm upgrade --install pgwatch ./helm/pgwatch \
+  -f your-values.yaml \
+  -f helm/pgwatch/test_scenarios/deployment/overlays/minikube-securitycontext.yaml
 ```
 
 ## Migration Reference

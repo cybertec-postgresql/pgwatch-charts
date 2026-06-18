@@ -1,0 +1,46 @@
+# Full-stack: external PostgreSQL sink, Prometheus, official Grafana subchart.
+# Requires subchart: helm dependency update helm/pgwatch
+# Prerequisite: an external PostgreSQL service must be reachable from the cluster.
+# Deploy: make deploy SCENARIO=grafana-subchart-external-postgres
+
+pgwatch:
+  env:
+    PW_LOGLEVEL: "debug"
+
+  postgres:
+    enablePgSink: true
+    createMetricDatabase: false
+    settings:
+      retentionDays: 7
+    useExistingDatabase:
+      endpoint: postgres-svc.pgwatch-postgres.svc.cluster.local
+      port: '5432'
+      database: postgres
+      sslmode: disable
+    credentials:
+      username: postgres
+      password: pgwatchtest
+
+  prometheus:
+    enablePromSink: true
+    newPrometheus:
+      createPrometheus: true
+      settings:
+        retentionDays: 7
+      volume:
+        size: '2Gi'
+
+  grafana:
+    useSubchart: true
+    enableGrafana: true
+
+grafana:
+  envValueFrom:
+    PGWATCH_METRICS_DS_USER:
+      secretKeyRef:
+        name: pgwatch-postgresql-secret-pgwatch
+        key: username
+    PGWATCH_METRICS_DS_PASSWORD:
+      secretKeyRef:
+        name: pgwatch-postgresql-secret-pgwatch
+        key: password

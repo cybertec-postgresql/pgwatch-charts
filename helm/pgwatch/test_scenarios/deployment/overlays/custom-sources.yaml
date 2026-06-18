@@ -1,0 +1,14 @@
+- name: custom_name
+  conn_str: ${NON_EXISTING_ENV_VAR}postgresql://$PGWATCH_USER:$PGWATCH_USER_PASSWORD@$METRIC_DATABASE_ENDPOINT:$METRIC_DATABASE_PORT/$METRIC_DATABASE_DATABASE?sslmode=$METRIC_DATABASE_SSLMODE
+  kind: postgres-continuous-discovery
+  preset_metrics: exhaustive_no_python
+  custom_metrics:
+  preset_metrics_standby:
+  custom_metrics_standby:
+  include_pattern:
+  exclude_pattern:
+  is_enabled: true
+  group: default
+  custom_tags:
+    filter_tag: special
+    testing_with: "Serdar"

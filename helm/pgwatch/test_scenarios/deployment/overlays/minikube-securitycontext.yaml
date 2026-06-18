@@ -1,0 +1,39 @@
+# Overlay: Minikube securityContext overrides.
+# Background: the postgres and timescaledb images start as root (UID 0) to set
+# up the data directory, then drop to the postgres user (UID 999). On Minikube,
+# fsGroup may not be applied before the container starts, causing a
+# "Permission denied" error. These overrides let the images manage their own
+# permissions instead of relying on the kubelet to apply fsGroup.
+#
+# Applied automatically by `make deploy` when MINIKUBE=true (the default).
+# To skip: make deploy SCENARIO=<name> MINIKUBE=false
+
+pgwatch:
+  postgres:
+    securityContext:
+      pod:
+        runAsUser: 0
+        runAsGroup: 0
+        fsGroup: 999
+        runAsNonRoot: false
+      container:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+        capabilities:
+          drop: []
+
+# timescaledb subchart uses different securityContext key names.
+# Only takes effect when timescaledb.enabled: true in the base scenario.
+timescaledb:
+  podSecurityContext:
+    runAsUser: 0
+    runAsGroup: 0
+    fsGroup: 999
+  containerSecurityContext:
+    runAsUser: 0
+    runAsGroup: 0
+    runAsNonRoot: false
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    capabilities:
+      drop: []

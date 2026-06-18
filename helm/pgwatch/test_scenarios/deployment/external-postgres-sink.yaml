@@ -1,0 +1,34 @@
+# Full-stack: external PostgreSQL sink, Prometheus, Grafana (custom Deployment).
+# Prerequisite: an external PostgreSQL service must be reachable from the cluster.
+# Deploy: make deploy SCENARIO=external-postgres-sink
+
+pgwatch:
+  env:
+    PW_LOGLEVEL: "debug"
+
+  postgres:
+    enablePgSink: true
+    createMetricDatabase: false
+    settings:
+      retentionDays: 7
+    useExistingDatabase:
+      endpoint: postgres-svc.pgwatch-postgres.svc.cluster.local
+      port: '5432'
+      database: postgres
+      sslmode: disable
+    credentials:
+      username: postgres
+      password: pgwatchtest
+
+  prometheus:
+    enablePromSink: true
+    newPrometheus:
+      createPrometheus: true
+      settings:
+        retentionDays: 7
+      volume:
+        size: '2Gi'
+
+  grafana:
+    useSubchart: false
+    enableGrafana: true

@@ -1,0 +1,36 @@
+# Verifies that setting enableGrafana: false renders no Grafana resources
+# (Deployment, Service, dashboard ConfigMaps, datasource ConfigMap).
+#
+# Verify with:
+#   helm template pgwatch . \
+#     -f test_scenarios/template-checks/grafana-disabled.yaml \
+#     --show-only templates/grafana-deployment.yaml
+#
+# Expected: empty output — no Grafana Deployment rendered.
+#
+# Also confirm no Grafana dashboard or datasource ConfigMaps are rendered:
+#   helm template pgwatch . \
+#     -f test_scenarios/template-checks/grafana-disabled.yaml \
+#     --show-only templates/grafana-dashboard-config.yaml
+#   helm template pgwatch . \
+#     -f test_scenarios/template-checks/grafana-disabled.yaml \
+#     --show-only templates/grafana-postgresql-dashboards.yaml
+#   helm template pgwatch . \
+#     -f test_scenarios/template-checks/grafana-disabled.yaml \
+#     --show-only templates/grafana-prometheus-dashboards.yaml
+#
+# Expected: empty output for all three — no Grafana-related ConfigMaps rendered.
+
+pgwatch:
+  postgres:
+    credentials:
+      username: pgwatch
+      password: pgwatchtest
+    adminCredentials:
+      password: pgwatchadmin
+
+  prometheus:
+    enablePromSink: false  # not the focus; keeps the render minimal
+
+  grafana:
+    enableGrafana: false
