@@ -16,6 +16,7 @@
 
 - Upgraded Grafana subchart dependency from `10.5.15` to `12.4.8` (Grafana app `13.0.2`), resolving [#38](https://github.com/cybertec-postgresql/pgwatch-charts/issues/38).
 - Upgraded built-in Grafana image (`pgwatch.grafana.image`) from `grafana/grafana:12.4.0` to `grafana/grafana:13.0.2` to match the subchart app version.
+- Updated all PostgreSQL and Prometheus dashboard JSON files from the upstream pgwatch repository ([`3b722b5e44`](https://github.com/cybertec-postgresql/pgwatch/tree/3b722b5e44/grafana)); notably `3-query-performance-analysis` received significant panel additions.
 
 ### Fixed
 
