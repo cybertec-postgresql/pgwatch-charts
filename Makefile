@@ -42,6 +42,7 @@ list:
 	@echo "  make portforward-pgwatch SCENARIO=<name>"
 	@echo "  make portforward-grafana SCENARIO=<name>"
 	@echo "  make teardown            SCENARIO=<name>"
+	@echo "  make status"
 
 status:
 	@helm list -A --filter '^$(RELEASE)$$'
