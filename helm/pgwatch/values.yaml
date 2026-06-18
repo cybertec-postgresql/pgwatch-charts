@@ -273,7 +273,7 @@ pgwatch:
     # grafana-svc are skipped; the grafana: top-level section controls the subchart.
     # When false (default): the custom Deployment runs exactly as before.
     useSubchart: false
-    image: grafana/grafana:12.4.0-21419697389 # Dashboards are prepared for grafana v12
+    image: grafana/grafana:13.0.2 # grafana appVersion from subchart 12.4.8
     # -- Resource requests and limits for the Grafana deployment.
     resources: {}
     enableGrafana: true

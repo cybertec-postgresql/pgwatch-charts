@@ -12,6 +12,11 @@
 - The ability to manually specify `resources` blocks on managed workloads ([#30](https://github.com/cybertec-postgresql/pgwatch-charts/issues/30)).
 - `apiVersion: v1` and `kind: PersistentVolumeClaim` to the built-in PostgreSQL `volumeClaimTemplates` entry for better ArgoCD compatibility ([#43](https://github.com/cybertec-postgresql/pgwatch-charts/issues/43)).
 
+### Changed
+
+- Upgraded Grafana subchart dependency from `10.5.15` to `12.4.8` (Grafana app `13.0.2`), resolving [#38](https://github.com/cybertec-postgresql/pgwatch-charts/issues/38).
+- Upgraded built-in Grafana image (`pgwatch.grafana.image`) from `grafana/grafana:12.4.0` to `grafana/grafana:13.0.2` to match the subchart app version.
+
 ### Fixed
 
 - `db-init` hook Job now honors `timescaledb.auth.secretKeys.adminPasswordKey` when TimescaleDB is enabled.
