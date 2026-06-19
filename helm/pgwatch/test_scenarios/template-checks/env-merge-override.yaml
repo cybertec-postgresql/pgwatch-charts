@@ -6,11 +6,11 @@
 # given here; a key that doesn't exist in the defaults is simply ADDED.
 #
 # Verify with:
-#   helm template pgwatch . -f test_scenarios/env-merge-override.yaml \
+#   helm template pgwatch . -f test_scenarios/template-checks/env-merge-override.yaml \
 #     --show-only templates/pgwatch-deployment.yaml
-#   helm template pgwatch . -f test_scenarios/env-merge-override.yaml \
+#   helm template pgwatch . -f test_scenarios/template-checks/env-merge-override.yaml \
 #     --show-only templates/postgres-statefulset.yaml
-#   helm template pgwatch . -f test_scenarios/env-merge-override.yaml \
+#   helm template pgwatch . -f test_scenarios/template-checks/env-merge-override.yaml \
 #     --show-only templates/grafana-deployment.yaml
 #
 # Expected results:
