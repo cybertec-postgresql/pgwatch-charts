@@ -1,0 +1,21 @@
+suite: prometheus-sink-disabled
+values:
+  - ../test_scenarios/template-checks/prometheus-sink-disabled.yaml
+tests:
+  - it: pgwatch Deployment does not expose the Prometheus scrape port when enablePromSink is false
+    template: templates/pgwatch-deployment.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            containerPort: 9188
+            protocol: TCP
+
+  - it: pgwatch Deployment does not set PROM_IS_SINK env var when enablePromSink is false
+    template: templates/pgwatch-deployment.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PROM_IS_SINK
+            value: "true"

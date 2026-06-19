@@ -1,0 +1,28 @@
+suite: ingress-subpath
+values:
+  - ../test_scenarios/template-checks/ingress-subpath.yaml
+tests:
+  - it: Ingress renders with correct host, path, and ingressClassName
+    template: templates/ingress.yaml
+    asserts:
+      - equal:
+          path: spec.ingressClassName
+          value: nginx
+      - equal:
+          path: spec.rules[0].host
+          value: pgwatch.example.com
+      - equal:
+          path: spec.rules[0].http.paths[0].path
+          value: /pgwatch
+      - equal:
+          path: spec.rules[0].http.paths[0].pathType
+          value: Prefix
+
+  - it: pgwatch Deployment has PW_WEBBASEPATH injected matching the Ingress path
+    template: templates/pgwatch-deployment.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PW_WEBBASEPATH
+            value: "/pgwatch"
