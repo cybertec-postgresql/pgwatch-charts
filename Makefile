@@ -46,6 +46,7 @@ list:
 	@echo "  make portforward-grafana SCENARIO=<name>"
 	@echo "  make teardown            SCENARIO=<name>"
 	@echo "  make status"
+	@echo "  make test-templates"
 
 status:
 	@helm list -A --filter '^$(RELEASE)$$'

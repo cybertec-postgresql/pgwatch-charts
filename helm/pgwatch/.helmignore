@@ -21,5 +21,6 @@
 *.tmproj
 .vscode/
 # Development and test artifacts
+Makefile
 test_scenarios/
 tests/
