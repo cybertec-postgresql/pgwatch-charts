@@ -1,0 +1,15 @@
+suite: grafana-disabled
+values:
+  - ../test_scenarios/template-checks/grafana-disabled.yaml
+tests:
+  - it: renders no Grafana Deployment when enableGrafana is false
+    template: templates/grafana-deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders no Grafana dashboard-config ConfigMap when enableGrafana is false
+    template: templates/grafana-dashboard-config.yaml
+    asserts:
+      - hasDocuments:
+          count: 0

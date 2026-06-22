@@ -1,0 +1,78 @@
+suite: env-merge-override
+values:
+  - ../test_scenarios/template-checks/env-merge-override.yaml
+tests:
+  - it: pgwatch Deployment uses the overridden METRIC_DATABASE_PORT with no duplicate entry
+    template: templates/pgwatch-deployment.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRIC_DATABASE_PORT
+            value: "5433"
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRIC_DATABASE_PORT
+            value: "5432"
+
+  - it: pgwatch Deployment has the added PW_LOGLEVEL env var
+    template: templates/pgwatch-deployment.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PW_LOGLEVEL
+            value: "debug"
+
+  - it: postgres StatefulSet uses the overridden POSTGRES_USER with no duplicate entry
+    template: templates/postgres-statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: POSTGRES_USER
+            value: "pgwatch_admin"
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: POSTGRES_USER
+            value: "postgres"
+
+  - it: postgres StatefulSet has the added POSTGRES_MAX_CONNECTIONS env var
+    template: templates/postgres-statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: POSTGRES_MAX_CONNECTIONS
+            value: "200"
+
+  - it: Grafana Deployment uses the overridden GF_AUTH_ANONYMOUS_ORG_ROLE with no duplicate entry
+    template: templates/grafana-deployment.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: GF_AUTH_ANONYMOUS_ORG_ROLE
+            value: "Viewer"
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: GF_AUTH_ANONYMOUS_ORG_ROLE
+            value: "Admin"
+
+  - it: Grafana Deployment has the added GF_LOG_LEVEL env var
+    template: templates/grafana-deployment.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: GF_LOG_LEVEL
+            value: "warn"

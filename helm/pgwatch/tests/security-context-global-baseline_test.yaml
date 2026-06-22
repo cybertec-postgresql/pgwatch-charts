@@ -1,0 +1,46 @@
+suite: security-context-global-baseline
+values:
+  - ../test_scenarios/template-checks/security-context-global-baseline.yaml
+tests:
+  - it: pgwatch pod inherits global baseline but component runAsUser override wins
+    template: templates/pgwatch-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 1001
+      - equal:
+          path: spec.template.spec.securityContext.runAsNonRoot
+          value: true
+      - equal:
+          path: spec.template.spec.securityContext.fsGroup
+          value: 1000
+
+  - it: pgwatch container inherits global container baseline
+    template: templates/pgwatch-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation
+          value: false
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem
+          value: true
+
+  - it: postgres pod securityContext is fully overridden by the component values
+    template: templates/postgres-statefulset.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 0
+      - equal:
+          path: spec.template.spec.securityContext.runAsNonRoot
+          value: false
+
+  - it: postgres container securityContext overrides readOnlyRootFilesystem and capabilities
+    template: templates/postgres-statefulset.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem
+          value: false
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.capabilities.drop
+          value: []

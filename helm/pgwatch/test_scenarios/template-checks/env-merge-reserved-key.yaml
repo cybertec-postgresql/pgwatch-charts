@@ -6,7 +6,7 @@
 #
 # As shipped, this file sets the pgwatch-component reserved key PGWATCH_USER.
 # Run:
-#   helm template pgwatch . -f test_scenarios/env-merge-reserved-key.yaml
+#   helm template pgwatch . -f test_scenarios/template-checks/env-merge-reserved-key.yaml
 #
 # Expected: the render FAILS with an error similar to:
 #   execution error ... pgwatch.env: "PGWATCH_USER" is reserved and managed

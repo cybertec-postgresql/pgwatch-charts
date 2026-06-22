@@ -30,7 +30,10 @@ GRAFANA_PORT := $(if $(findstring grafana-subchart,$(SCENARIO)),80,3000)
 
 .DEFAULT_GOAL := list
 
-.PHONY: list status deploy teardown portforward-pgwatch portforward-grafana
+.PHONY: list status deploy teardown portforward-pgwatch portforward-grafana test-templates
+
+test-templates:
+	helm unittest helm/pgwatch
 
 list:
 	@echo "Available scenarios:"
@@ -43,6 +46,7 @@ list:
 	@echo "  make portforward-grafana SCENARIO=<name>"
 	@echo "  make teardown            SCENARIO=<name>"
 	@echo "  make status"
+	@echo "  make test-templates"
 
 status:
 	@helm list -A --filter '^$(RELEASE)$$'

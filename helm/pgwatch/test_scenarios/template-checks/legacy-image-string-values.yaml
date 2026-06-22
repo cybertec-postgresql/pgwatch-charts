@@ -8,7 +8,7 @@
 #
 # Verify with:
 #   helm install pgwatch . -n pgwatch-legacy-test --create-namespace \
-#     -f test_scenarios/legacy-image-string-values.yaml --dry-run --debug
+#     -f test_scenarios/template-checks/legacy-image-string-values.yaml --dry-run --debug
 #
 # Expected: the render SUCCEEDS, and NOTES.txt prints exactly ONE WARNING
 # block: "Detected legacy string value for pgwatch.image" — no

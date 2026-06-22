@@ -12,7 +12,7 @@
 #
 # Steps:
 #   helm install pgwatch-envfrom-test . -n pgwatch-envfrom-test \
-#     --create-namespace -f test_scenarios/env-merge-envfrom-precedence.yaml
+#     --create-namespace -f test_scenarios/template-checks/env-merge-envfrom-precedence.yaml
 #   kubectl exec -n pgwatch-envfrom-test deploy/pgwatch -- printenv PW_LOGLEVEL
 #
 # Expected: prints "debug" (the explicit env value), never "info" (the

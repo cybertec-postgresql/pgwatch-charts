@@ -1,0 +1,20 @@
+suite: legacy-bool-values
+templates:
+  - templates/NOTES.txt
+values:
+  - ../test_scenarios/template-checks/legacy-bool-values.yaml
+tests:
+  - it: NOTES.txt warns about legacy string booleans and no other legacy warning
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "Detected legacy string boolean values"
+      - notMatchRegex:
+          path: raw
+          pattern: "Detected legacy snake_case values"
+      - notMatchRegex:
+          path: raw
+          pattern: "Detected deprecated inline external database credentials"
+      - notMatchRegex:
+          path: raw
+          pattern: "Detected legacy string value for pgwatch.image"
