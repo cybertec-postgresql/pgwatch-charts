@@ -19,6 +19,7 @@ Grafana components, and it supports optional TimescaleDB and Grafana subcharts.
   - [Supported components](#supported-components)
   - [Credential Management](#credential-management)
   - [Environment Variables and Config Injection](#environment-variables-and-config-injection)
+  - [Monitored Database Helper Functions](#monitored-database-helper-functions)
   - [Security Contexts](#security-contexts)
   - [Extra Resources](#extra-resources)
 - [Kubernetes Labels and Selectors](#kubernetes-labels-and-selectors)
@@ -332,6 +333,54 @@ The following keys are managed by the chart via `secretKeyRef` and **cannot** be
 | `postgres` | `POSTGRES_PASSWORD` | `pgwatch.postgres.adminCredentials.existingSecret` + `.passwordKey` |
 
 See [Credential Management](#credential-management) for details on configuring these values.
+
+### Monitored Database Helper Functions
+
+> **See also:** [Preparing Monitored Databases](https://pgwat.ch/v5.x/tutorial/preparing_databases.html) in the pgwatch documentation for the full background on helper functions.
+
+Helper functions in pgwatch are standard PostgreSQL stored procedures running under `SECURITY DEFINER` privileges, allowing the monitoring role to access metrics that would otherwise require elevated permissions. Metrics like `cpu_load`, `psutil_mem`, `psutil_disk`, and `get_backup_age_*` depend on these helpers and they must exist on **each monitored database**. If the helpers are missing, the corresponding Grafana dashboards will show no data even though pgwatch is otherwise healthy.
+
+> **Note:** This is unrelated to the `db-init` Job, which only provisions the pgwatch role and the `pgwatch`/`pgwatch_metrics`/`pgwatch_grafana` databases used by pgwatch itself. It has no visibility into, and does not touch, the databases you add for monitoring via `pgwatch.sources`. Provisioning those is your responsibility.
+
+#### Monitoring role
+
+A least-privilege monitoring role for the monitored databases (See [basic preparations](https://pgwat.ch/v5.x/tutorial/preparing_databases.html#basic-preparations)) looks like this:
+
+```sql
+CREATE ROLE pgwatch WITH LOGIN PASSWORD 'secret';
+-- For critical databases it might make sense to ensure that the user account
+-- used for monitoring can only open a limited number of connections
+-- (there are according checks in code, but multiple instances might be launched)
+ALTER ROLE pgwatch CONNECTION LIMIT 5;
+GRANT pg_monitor TO pgwatch;
+GRANT CONNECT ON DATABASE mydb TO pgwatch;
+GRANT EXECUTE ON FUNCTION pg_stat_file(text) to pgwatch; -- for wal_size metric
+GRANT EXECUTE ON FUNCTION pg_stat_file(text, boolean) TO pgwatch;
+```
+
+#### Creating helper functions
+
+See [metrics initialization](https://pgwat.ch/v5.x/tutorial/preparing_databases.html#metrics-initialization) in the pgwatch documentation. You have two options to make the helpers available:
+
+1. **Create them once, up front, as a superuser** (recommended):
+
+   ```sh
+   pgwatch metric print-init <metric or preset name> | psql -d mydb
+   ```
+
+2. **Let pgwatch create them automatically on startup** by setting `PW_CREATE_HELPERS=true`:
+
+   ```yaml
+   pgwatch:
+     env:
+       PW_CREATE_HELPERS: "true"
+   ```
+
+   This is **not enabled by default** in the chart: it requires the credentials configured in `pgwatch.sources` to have sufficient privileges (`CREATE EXTENSION`, `CREATE FUNCTION`, superuser-equivalent) on every monitored database. If the monitoring role lacks these privileges, enabling this will fail silently per-metric (logged as warnings) instead of creating the helpers, so option 1 is the safer choice in that case.
+
+#### OS metrics and managed services
+
+PL/Python-based OS metrics (`cpu_load`, `psutil_mem`, `psutil_disk`, etc.) additionally require the `plpython3u` extension and the `python3-psutil` package on the database host (see [PL/Python helpers](https://pgwat.ch/v5.x/tutorial/preparing_databases.html#plpython-helpers)). Managed services such as AWS RDS do not allow installing `plpython3u`, so these specific helpers, and the metrics that depend on them, cannot be enabled there regardless of which option above you use.
 
 ### Security Contexts
 
