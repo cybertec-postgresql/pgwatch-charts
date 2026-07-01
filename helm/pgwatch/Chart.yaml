@@ -8,7 +8,7 @@ dependencies:
   # TimescaleDB subchart — opt-in replacement for the built-in PostgreSQL StatefulSet.
   # Activate with: timescaledb.enabled: true
   - name: timescaledb
-    version: "0.12.1"
+    version: "0.12.2"
     repository: "oci://registry-1.docker.io/cloudpirates"
     condition: timescaledb.enabled
 
