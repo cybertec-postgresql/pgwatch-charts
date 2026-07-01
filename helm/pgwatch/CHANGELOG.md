@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Upgraded TimescaleDB subchart dependency from `0.12.1` to `0.12.2`.
+
 ## [4.1.0] – 2026-06-18
 
 ### Deprecated

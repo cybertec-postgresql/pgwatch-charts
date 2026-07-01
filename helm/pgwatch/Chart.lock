@@ -1,9 +1,9 @@
 dependencies:
 - name: timescaledb
   repository: oci://registry-1.docker.io/cloudpirates
-  version: 0.12.1
+  version: 0.12.2
 - name: grafana
   repository: oci://ghcr.io/grafana-community/helm-charts
   version: 12.4.8
-digest: sha256:79edd2eed63c06f76acffea18f6d2fa94b1f09c5686f50de84355a1cb47dac32
-generated: "2026-06-18T12:48:49.256186118+02:00"
+digest: sha256:e7bc513ff5f5135369575cc0e310f92cd61cd4ba1a04529bd4bac232875c9b1a
+generated: "2026-07-01T13:02:31.755789708+02:00"
