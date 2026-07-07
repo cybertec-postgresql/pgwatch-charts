@@ -1,0 +1,34 @@
+# Full-stack: built-in PostgreSQL sink, Prometheus, Grafana (custom Deployment), anonymous access disabled.
+# Deploy: make deploy SCENARIO=builtin-grafana-anonymous-disabled
+
+pgwatch:
+  env:
+    PW_LOGLEVEL: "debug"
+
+  postgres:
+    enablePgSink: true
+    createMetricDatabase: true
+    settings:
+      retentionDays: 7
+    credentials:
+      username: pgwatch
+      password: pgwatchtest
+    adminCredentials:
+      password: pgwatchadmin
+
+  prometheus:
+    enablePromSink: true
+    newPrometheus:
+      createPrometheus: true
+      settings:
+        retentionDays: 7
+      volume:
+        size: '2Gi'
+
+  grafana:
+    useSubchart: false
+    enableGrafana: true
+    env:
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_SECURITY_ADMIN_USER: "admin"
+      GF_SECURITY_ADMIN_PASSWORD: "pgwatchadmin"
