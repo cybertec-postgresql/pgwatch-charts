@@ -25,22 +25,22 @@ pgwatch.pgwatch.env
   {{- end }}
 {{- end }}
 {{- $defaults := dict -}}
-{{- if include "pgwatch.isTrue" (include "pgwatch.postgres.createMetricDatabase" $root) }}
+{{- if $root.Values.pgwatch.postgres.createMetricDatabase }}
   {{- $_ := set $defaults "METRIC_DATABASE_ENDPOINT" (printf "%s.%s.svc.cluster.local" (include "pgwatch.dbHost" $root) $root.Release.Namespace) -}}
   {{- $_ := set $defaults "METRIC_DATABASE_PORT" "5432" -}}
   {{- $_ := set $defaults "METRIC_DATABASE_DATABASE" "pgwatch_metrics" -}}
   {{- $_ := set $defaults "METRIC_DATABASE_SSLMODE" "disable" -}}
-{{- else if include "pgwatch.postgres.hasUseExistingDatabase" $root }}
-  {{- $_ := set $defaults "METRIC_DATABASE_ENDPOINT" (include "pgwatch.postgres.useExistingDatabase.endpoint" $root) -}}
-  {{- $_ := set $defaults "METRIC_DATABASE_PORT" (include "pgwatch.postgres.useExistingDatabase.port" $root) -}}
-  {{- $_ := set $defaults "METRIC_DATABASE_DATABASE" (include "pgwatch.postgres.useExistingDatabase.database" $root) -}}
-  {{- $_ := set $defaults "METRIC_DATABASE_SSLMODE" (include "pgwatch.postgres.useExistingDatabase.sslmode" $root) -}}
+{{- else if $root.Values.pgwatch.postgres.useExistingDatabase }}
+  {{- $_ := set $defaults "METRIC_DATABASE_ENDPOINT" $root.Values.pgwatch.postgres.useExistingDatabase.endpoint -}}
+  {{- $_ := set $defaults "METRIC_DATABASE_PORT" $root.Values.pgwatch.postgres.useExistingDatabase.port -}}
+  {{- $_ := set $defaults "METRIC_DATABASE_DATABASE" $root.Values.pgwatch.postgres.useExistingDatabase.database -}}
+  {{- $_ := set $defaults "METRIC_DATABASE_SSLMODE" $root.Values.pgwatch.postgres.useExistingDatabase.sslmode -}}
 {{- end }}
-{{- if include "pgwatch.isTrue" (include "pgwatch.postgres.enablePgSink" $root) }}
+{{- if $root.Values.pgwatch.postgres.enablePgSink }}
   {{- $_ := set $defaults "PG_IS_SINK" "true" -}}
-  {{- $_ := set $defaults "PG_RETENTION_DAYS" (printf "%s days" (include "pgwatch.postgres.settings.retentionDays" $root)) -}}
+  {{- $_ := set $defaults "PG_RETENTION_DAYS" (printf "%v days" $root.Values.pgwatch.postgres.settings.retentionDays) -}}
 {{- end }}
-{{- if include "pgwatch.isTrue" (include "pgwatch.prometheus.enablePromSink" $root) }}
+{{- if $root.Values.pgwatch.prometheus.enablePromSink }}
   {{- $_ := set $defaults "PROM_IS_SINK" "true" -}}
 {{- end }}
 {{- if and $root.Values.pgwatch.ingress.enabled $root.Values.pgwatch.ingress.webBasePath }}

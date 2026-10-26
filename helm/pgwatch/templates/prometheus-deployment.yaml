@@ -1,4 +1,4 @@
-{{- if include "pgwatch.isTrue" (include "pgwatch.prometheus.newPrometheus.createPrometheus" .) }}
+{{- if .Values.pgwatch.prometheus.newPrometheus.createPrometheus }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -36,7 +36,7 @@ spec:
         - mountPath: /prometheus
           name: prometheus-volume
       containers:
-      - image: {{ (include "pgwatch.prometheus.newPrometheus.image" .) }}
+      - image: {{ .Values.pgwatch.prometheus.newPrometheus.image }}
         {{- with .Values.pgwatch.prometheus.newPrometheus.resources }}
         resources:
           {{- toYaml . | nindent 10 }}
@@ -81,7 +81,7 @@ spec:
         args:
           - "--config.file=/etc/prometheus/prometheus.yml"
           - "--storage.tsdb.path=/prometheus"
-          - "--storage.tsdb.retention.time={{ (include "pgwatch.prometheus.newPrometheus.settings.retentionDays" .) }}d"
+          - "--storage.tsdb.retention.time={{ .Values.pgwatch.prometheus.newPrometheus.settings.retentionDays }}d"
         {{- include "pgwatch.containerSecurityContext" (dict "global" .Values.securityContext "component" .Values.pgwatch.prometheus.securityContext) | nindent 8 }}
         volumeMounts:
         - mountPath: /etc/prometheus

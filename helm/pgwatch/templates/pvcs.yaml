@@ -1,4 +1,4 @@
-{{- if include "pgwatch.isTrue" (include "pgwatch.prometheus.newPrometheus.createPrometheus" .) }}
+{{- if .Values.pgwatch.prometheus.newPrometheus.createPrometheus }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -12,6 +12,6 @@ spec:
   - ReadWriteOnce
   resources:
     requests:
-      storage: {{ (include "pgwatch.prometheus.newPrometheus.volume.size" .) }}
-  storageClassName: {{ (include "pgwatch.prometheus.newPrometheus.volume.storageClass" .) }}
+      storage: {{ .Values.pgwatch.prometheus.newPrometheus.volume.size }}
+  storageClassName: {{ .Values.pgwatch.prometheus.newPrometheus.volume.storageClass }}
 {{ end }}

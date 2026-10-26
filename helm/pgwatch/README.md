@@ -14,7 +14,6 @@ Grafana components, and it supports optional TimescaleDB and Grafana subcharts.
 
 - [Quick Start](#quick-start)
 - [Choose Your Metrics Storage](#choose-your-metrics-storage)
-- [Upgrade to Chart 4.x](#upgrade-to-chart-4x)
 - [Configuration](#configuration)
   - [Supported components](#supported-components)
   - [Credential Management](#credential-management)
@@ -25,6 +24,9 @@ Grafana components, and it supports optional TimescaleDB and Grafana subcharts.
 - [Kubernetes Labels and Selectors](#kubernetes-labels-and-selectors)
 - [Helm Dependencies](#helm-dependencies)
 - [Local Development](#local-development)
+- [Upgrading](#upgrading)
+  - [Upgrade to Chart 5.x](#upgrade-to-chart-5x)
+  - [Upgrade to Chart 4.x](#upgrade-to-chart-4x)
 - [Migration Reference](#migration-reference)
 
 ## Quick Start
@@ -38,6 +40,8 @@ and create a `custom-values.yaml` for your environment.
 > credential values or reference existing Kubernetes Secrets before running
 > `helm install`, `helm upgrade`, or `helm template`. See
 > [Credential Management](#credential-management).
+>
+> **Upgrading an existing release?** Read [Upgrading](#upgrading) first.
 
 ### Install from the Helm repository
 
@@ -93,93 +97,6 @@ use one or both simultaneously.
 
 See [Supported components](#supported-components) for detailed configuration options.
 
-## Upgrade to Chart 4.x
-
-Read this section before upgrading an existing installation to chart 4.x.
-
-### Breaking change: selector labels changed
-
-Chart 4.0.0 changes the selectors of the built-in `Deployment` and
-`StatefulSet` resources to use the standardized `app.kubernetes.io/*` labels.
-Kubernetes treats these selectors as immutable, so upgrades from chart versions
-that used the previous selector labels may fail with:
-
-```text
-field is immutable: spec.selector
-```
-
-Affected built-in workloads are:
-
-- `Deployment/pgwatch`
-- `Deployment/grafana` when `pgwatch.grafana.useSubchart=false`
-- `Deployment/pgwatch-prometheus` when `pgwatch.prometheus.newPrometheus.createPrometheus=true`
-- `StatefulSet/postgres` when using the built-in PostgreSQL database
-
-If an upgrade fails with an immutable selector error, delete the affected
-workload object and rerun `helm upgrade`. Do not delete PVCs unless you
-intentionally want to remove stored data. For example:
-
-```sh
-kubectl delete deployment pgwatch -n pgwatch
-kubectl delete deployment grafana -n pgwatch
-kubectl delete deployment pgwatch-prometheus -n pgwatch
-kubectl delete statefulset postgres -n pgwatch --cascade=orphan
-helm upgrade pgwatch pgwatch/pgwatch -n pgwatch --values custom-values.yaml
-```
-
-> **Note on the PostgreSQL StatefulSet:** `--cascade=orphan` prevents the old
-> `postgres-0` Pod from being deleted when the StatefulSet is removed. However,
-> because the selector labels also changed, the new StatefulSet cannot adopt the
-> orphaned Pod — its old labels no longer match the new selector. The StatefulSet
-> will be stuck trying to create `postgres-0` while the orphaned Pod is still
-> running under that name.
->
-> If this happens, delete the orphaned Pod as well. Your data is stored in the
-> PVC, not in the Pod, so it is safe:
->
-> ```sh
-> kubectl delete pod postgres-0 -n pgwatch
-> ```
->
-> The new StatefulSet will then create a fresh `postgres-0` that attaches to the
-> existing PVC and reconnects to your data automatically.
-
-Adjust the commands to match the components enabled in your installation and
-the namespace/release name you use.
-
-### Required credential values
-
-Chart 4.0.0 introduces explicit Secret-based credential handling. Chart
-versions before this did not have `pgwatch.postgres.credentials` or
-`pgwatch.postgres.adminCredentials`, so upgrades with `--reuse-values` can miss
-new 4.x defaults and may fail unless you provide the newly required values.
-
-Before installing or upgrading, review
-[Mandatory credential values](#mandatory-credential-values). For example, when
-using the built-in PostgreSQL database, both the pgwatch application-user
-password and the PostgreSQL admin password must be provided:
-
-```sh
-helm upgrade pgwatch pgwatch/pgwatch -n pgwatch --values custom-values.yaml \
-  --set pgwatch.postgres.credentials.password='change-me-app' \
-  --set pgwatch.postgres.adminCredentials.password='change-me-admin'
-```
-
-> **Note:** Avoid `--reuse-values` for 3.x -> 4.x upgrades unless the old
-> release values have been migrated. Prefer an explicit 4.x values file, or use
-> `--reset-values --values custom-values.yaml` to start from the new chart
-> defaults.
-
-### Backward-compatible deprecations
-
-Chart 4.0.0 also prefers native YAML booleans (`true` / `false`) and Helm-style
-camelCase values. Legacy string booleans (`"true"` / `"false"`) and former
-snake_case value keys still work temporarily for backward compatibility and
-emit migration warnings during install/upgrade.
-
-See [Migration Reference](#migration-reference) for the current value names and
-migration mapping.
-
 ## Configuration
 
 ### Supported components
@@ -202,8 +119,6 @@ The Helm chart currently supports PostgreSQL and Prometheus as a sink. This can 
 [Issue #12](https://github.com/cybertec-postgresql/pgwatch-charts/issues/12) changed credential handling to use Kubernetes Secrets instead of
 hardcoded values or plaintext in manifests.
 
-**Deprecation:** `useExistingDatabase.username/password` still work but will emit warnings. They will be removed in a future chart version.
-
 #### Mandatory credential values
 
 The chart does **not** ship default passwords. Depending on the PostgreSQL mode
@@ -216,7 +131,7 @@ existing Kubernetes Secrets. If a required password is missing, `helm install`,
 | Deployment mode | Required values |
 | --- | --- |
 | Built-in PostgreSQL (`pgwatch.postgres.createMetricDatabase=true`, `timescaledb.enabled=false`) | `pgwatch.postgres.credentials.password` for the pgwatch/Grafana application user, and `pgwatch.postgres.adminCredentials.password` for the `postgres` superuser. Alternatively set `pgwatch.postgres.credentials.existingSecret` and/or `pgwatch.postgres.adminCredentials.existingSecret`. |
-| External PostgreSQL (`pgwatch.postgres.createMetricDatabase=false`) | Database connection settings under `pgwatch.postgres.useExistingDatabase.*` plus application-user credentials via `pgwatch.postgres.credentials.password`, `pgwatch.postgres.credentials.existingSecret`, or deprecated `pgwatch.postgres.useExistingDatabase.password`. `pgwatch.postgres.adminCredentials.*` is ignored. |
+| External PostgreSQL (`pgwatch.postgres.createMetricDatabase=false`) | Database connection settings under `pgwatch.postgres.useExistingDatabase.*` plus application-user credentials via `pgwatch.postgres.credentials.password` or `pgwatch.postgres.credentials.existingSecret`. `pgwatch.postgres.adminCredentials.*` is ignored. |
 | TimescaleDB subchart (`timescaledb.enabled=true`) | Application-user credentials via `pgwatch.postgres.credentials.password` or `pgwatch.postgres.credentials.existingSecret`. `pgwatch.postgres.adminCredentials.*` is ignored; configure the TimescaleDB admin password with `timescaledb.auth.*` instead. |
 
 Examples below use placeholder passwords. Replace them before production use.
@@ -228,7 +143,6 @@ For the pgwatch application / Grafana DB user credentials under
 
 1. `credentials.existingSecret` — chart creates no Secret
 2. `credentials.username` / `credentials.password` — chart creates Secret
-3. DEPRECATED: `useExistingDatabase.username` / `password` — fallback, emits warning
 
 #### Generated Secrets
 
@@ -571,20 +485,161 @@ helm upgrade --install pgwatch ./helm/pgwatch \
   -f helm/pgwatch/test_scenarios/deployment/overlays/minikube-securitycontext.yaml
 ```
 
+## Upgrading
+
+If you skip a major version, apply the steps for each version in between,
+oldest first.
+
+### Upgrade to Chart 5.x
+
+Chart 5.0.0 removes the value formats deprecated in chart 4.x:
+
+- String booleans (`"true"` / `"false"`)
+- snake_case value keys (e.g. `enable_pg_sink`, `use_existing_database`)
+- Inline credentials under `pgwatch.postgres.useExistingDatabase.username` / `password`
+- Plain string `pgwatch.image`
+
+The chart ships a `values.schema.json` that rejects these formats, so
+`helm install`, `helm upgrade` and `helm template` fail instead of silently
+ignoring the old values. For example:
+
+```text
+Error: values don't meet the specifications of the schema(s) in the following chart(s):
+pgwatch:
+- at '/pgwatch/postgres/enablePgSink': got string, want boolean
+- at '/pgwatch/postgres/enable_pg_sink': false schema
+```
+
+- `got string, want boolean`: replace the quoted string with a native YAML
+  boolean (`true` / `false`). With `--set`, avoid `--set-string` for these keys.
+- `false schema`: the key at that path has been removed. Rename or move it as
+  described in the [Migration Reference](#migration-reference).
+- `got string, want object` at `/pgwatch/image`: switch to
+  `pgwatch.image.repository` / `pgwatch.image.tag`.
+
+> **Note:** `--reuse-values` reuses the values stored in the release. If those
+> still contain old formats, the upgrade fails. Migrate your values file and
+> upgrade with `--reset-values --values custom-values.yaml` instead.
+
+### Upgrade to Chart 4.x
+
+
+Read this section before upgrading an existing installation to chart 4.x.
+
+#### Breaking change: selector labels changed
+
+Chart 4.0.0 changes the selectors of the built-in `Deployment` and
+`StatefulSet` resources to use the standardized `app.kubernetes.io/*` labels.
+Kubernetes treats these selectors as immutable, so upgrades from chart versions
+that used the previous selector labels may fail with:
+
+```text
+field is immutable: spec.selector
+```
+
+Affected built-in workloads are:
+
+- `Deployment/pgwatch`
+- `Deployment/grafana` when `pgwatch.grafana.useSubchart=false`
+- `Deployment/pgwatch-prometheus` when `pgwatch.prometheus.newPrometheus.createPrometheus=true`
+- `StatefulSet/postgres` when using the built-in PostgreSQL database
+
+If an upgrade fails with an immutable selector error, delete the affected
+workload object and rerun `helm upgrade`. Do not delete PVCs unless you
+intentionally want to remove stored data. For example:
+
+```sh
+kubectl delete deployment pgwatch -n pgwatch
+kubectl delete deployment grafana -n pgwatch
+kubectl delete deployment pgwatch-prometheus -n pgwatch
+kubectl delete statefulset postgres -n pgwatch --cascade=orphan
+helm upgrade pgwatch pgwatch/pgwatch -n pgwatch --values custom-values.yaml
+```
+
+> **Note on the PostgreSQL StatefulSet:** `--cascade=orphan` prevents the old
+> `postgres-0` Pod from being deleted when the StatefulSet is removed. However,
+> because the selector labels also changed, the new StatefulSet cannot adopt the
+> orphaned Pod — its old labels no longer match the new selector. The StatefulSet
+> will be stuck trying to create `postgres-0` while the orphaned Pod is still
+> running under that name.
+>
+> If this happens, delete the orphaned Pod as well. Your data is stored in the
+> PVC, not in the Pod, so it is safe:
+>
+> ```sh
+> kubectl delete pod postgres-0 -n pgwatch
+> ```
+>
+> The new StatefulSet will then create a fresh `postgres-0` that attaches to the
+> existing PVC and reconnects to your data automatically.
+
+Adjust the commands to match the components enabled in your installation and
+the namespace/release name you use.
+
+#### Required credential values
+
+Chart 4.0.0 introduces explicit Secret-based credential handling. Chart
+versions before this did not have `pgwatch.postgres.credentials` or
+`pgwatch.postgres.adminCredentials`, so upgrades with `--reuse-values` can miss
+new 4.x defaults and may fail unless you provide the newly required values.
+
+Before installing or upgrading, review
+[Mandatory credential values](#mandatory-credential-values). For example, when
+using the built-in PostgreSQL database, both the pgwatch application-user
+password and the PostgreSQL admin password must be provided:
+
+```sh
+helm upgrade pgwatch pgwatch/pgwatch -n pgwatch --values custom-values.yaml \
+  --set pgwatch.postgres.credentials.password='change-me-app' \
+  --set pgwatch.postgres.adminCredentials.password='change-me-admin'
+```
+
+> **Note:** Avoid `--reuse-values` for 3.x -> 4.x upgrades unless the old
+> release values have been migrated. Prefer an explicit 4.x values file, or use
+> `--reset-values --values custom-values.yaml` to start from the new chart
+> defaults.
+
+
 ## Migration Reference
 
-### snake_case to camelCase values
+### Value formats removed in chart 5.0.0
 
-Boolean options in this chart now use native YAML booleans (`true` / `false`).
-Legacy string values (`"true"` / `"false"`) are still accepted temporarily for
-compatibility, but are deprecated and will be removed in a future chart version.
+The formats below were deprecated in chart 4.0.0 / 4.1.0 and are removed in chart
+5.0.0. The chart's `values.schema.json` rejects them; see
+[Upgrade to Chart 5.x](#upgrade-to-chart-5x).
 
-Values keys follow Helm's camelCase naming convention. The former snake_case
-keys are still accepted as backward-compatible fallbacks and emit a Helm
-install/upgrade warning. Please migrate them before the next major chart
-version, where snake_case compatibility will be removed:
+#### String booleans
 
-| Deprecated snake_case | Replacement camelCase |
+Boolean options only accept native YAML booleans:
+
+```yaml
+# Old
+pgwatch:
+  postgres:
+    enablePgSink: "true"
+
+# New
+pgwatch:
+  postgres:
+    enablePgSink: true
+```
+
+Affected keys:
+
+- `pgwatch.postgres.enablePgSink`
+- `pgwatch.postgres.createMetricDatabase`
+- `pgwatch.prometheus.enablePromSink`
+- `pgwatch.prometheus.newPrometheus.createPrometheus`
+- `pgwatch.grafana.enableGrafana`
+- `pgwatch.grafana.enableDatasources.postgres`
+- `pgwatch.grafana.enableDatasources.prometheus`
+
+#### snake_case to camelCase values
+
+Values keys follow Helm's camelCase naming convention. Rename the former
+snake_case keys as follows:
+
+| Removed snake_case | Replacement camelCase |
 | --- | --- |
 | `pgwatch.postgres.enable_pg_sink` | `pgwatch.postgres.enablePgSink` |
 | `pgwatch.postgres.settings.retention_days` | `pgwatch.postgres.settings.retentionDays` |
@@ -599,23 +654,29 @@ version, where snake_case compatibility will be removed:
 | `pgwatch.grafana.enable_grafana` | `pgwatch.grafana.enableGrafana` |
 | `pgwatch.grafana.enable_datasources` | `pgwatch.grafana.enableDatasources` |
 
-### Deprecated inline database credentials
+Nested keys must be renamed too, also when their parent already uses camelCase
+(e.g. `pgwatch.prometheus.newPrometheus.create_prometheus`).
 
-Before, credentials could be defined inline under `useExistingDatabase`. This is
-deprecated but still works with a warning:
+#### Inline database credentials
+
+Credentials can no longer be defined inline under `useExistingDatabase`:
 
 ```yaml
+# Old
 pgwatch:
   postgres:
     useExistingDatabase:
       endpoint: postgresql.local
-      username: pgwatch_user   # deprecated
-      password: change-me      # deprecated
+      username: pgwatch_user
+      password: change-me
 ```
 
-Move credentials under `pgwatch.postgres.credentials` instead:
+Move them under `pgwatch.postgres.credentials`, or reference an existing Secret
+via `pgwatch.postgres.credentials.existingSecret` (see
+[Credential Management](#credential-management)):
 
 ```yaml
+# New
 pgwatch:
   postgres:
     useExistingDatabase:
@@ -625,20 +686,18 @@ pgwatch:
       password: change-me
 ```
 
-### pgwatch.image string to object migration
+#### pgwatch.image string to object
 
-`pgwatch.image` plain string format is deprecated and will be removed in a future release.
-
-Migrate your values as follows:
+`pgwatch.image` only accepts the structured format:
 
 ```yaml
 # Old
 pgwatch:
-  image: "docker.io/cybertecpostgresql/pgwatch"
+  image: "docker.io/cybertecpostgresql/pgwatch:5.2"
 
 # New
 pgwatch:
   image:
     repository: "docker.io/cybertecpostgresql/pgwatch"
-    tag: ""  # empty defaults to .Chart.AppVersion
+    tag: "5.2"  # empty defaults to .Chart.AppVersion
 ```

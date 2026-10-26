@@ -1,4 +1,4 @@
-{{- if include "pgwatch.isTrue" (include "pgwatch.prometheus.newPrometheus.createPrometheus" .) }}
+{{- if .Values.pgwatch.prometheus.newPrometheus.createPrometheus }}
 apiVersion: v1
 kind: ConfigMap
 metadata:

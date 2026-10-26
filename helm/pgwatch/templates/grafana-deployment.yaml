@@ -2,7 +2,7 @@
   Skipped when pgwatch.grafana.useSubchart: true — the official Grafana subchart
   provides the Grafana instance in that case (see grafana: top-level values block).
 */}}
-{{- if and (include "pgwatch.isTrue" (include "pgwatch.grafana.enableGrafana" .)) (not .Values.pgwatch.grafana.useSubchart) }}
+{{- if and .Values.pgwatch.grafana.enableGrafana (not .Values.pgwatch.grafana.useSubchart) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -64,7 +64,7 @@ spec:
           projected:
             defaultMode: 416
             sources:
-              {{- if include "pgwatch.isTrue" (include "pgwatch.postgres.enablePgSink" .) }}
+              {{- if .Values.pgwatch.postgres.enablePgSink }}
               {{- range $path, $_ := .Files.Glob "dashboards/postgresql/*.json" }}
               - configMap:
                   name: "grafana-postgresql-dashboard-{{ base $path | lower | replace "." "-" | replace "_" "-" }}"
@@ -74,7 +74,7 @@ spec:
               {{- end }}
               {{- end }}
 
-              {{- if include "pgwatch.isTrue" (include "pgwatch.prometheus.enablePromSink" .) }}
+              {{- if .Values.pgwatch.prometheus.enablePromSink }}
               {{- range $path, $_ := .Files.Glob "dashboards/prometheus/*.json" }}
               - configMap:
                   name: "grafana-prometheus-dashboard-{{ base $path | lower | replace "." "-" | replace "_" "-" }}"
@@ -98,7 +98,7 @@ spec:
     provisioning directory — no pod restart required.
 
 */}}
-{{- if include "pgwatch.isTrue" (include "pgwatch.grafana.enableGrafana" .) }}
+{{- if .Values.pgwatch.grafana.enableGrafana }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -121,8 +121,8 @@ data:
   postgres_datasource.yml: |
     apiVersion: 1
     datasources:
-  {{- if include "pgwatch.isTrue" (include "pgwatch.grafana.enableDatasources.postgres" .) }}
-  {{- if include "pgwatch.isTrue" (include "pgwatch.postgres.createMetricDatabase" .) }}
+  {{- if .Values.pgwatch.grafana.enableDatasources.postgres }}
+  {{- if .Values.pgwatch.postgres.createMetricDatabase }}
     - name: pgwatch-metrics
       type: postgres
       url: "{{ include "pgwatch.dbHost" . }}:5432"
@@ -138,23 +138,23 @@ data:
         password: "${PGWATCH_METRICS_DS_PASSWORD}"
       version: 1
       editable: true
-  {{- else if (include "pgwatch.postgres.hasUseExistingDatabase" .) }}
+  {{- else if .Values.pgwatch.postgres.useExistingDatabase }}
     - name: pgwatch-metrics
       type: postgres
-      url: {{ (include "pgwatch.postgres.useExistingDatabase.endpoint" .) }}:{{ (include "pgwatch.postgres.useExistingDatabase.port" .) }}
+      url: {{ .Values.pgwatch.postgres.useExistingDatabase.endpoint }}:{{ .Values.pgwatch.postgres.useExistingDatabase.port }}
       access: proxy
       user: "${PGWATCH_METRICS_DS_USER}"
       isDefault: true
       jsonData:
-        database: {{ (include "pgwatch.postgres.useExistingDatabase.database" .) }}
-        sslmode: {{ (include "pgwatch.postgres.useExistingDatabase.sslmode" .) | default "disable" }}
+        database: {{ .Values.pgwatch.postgres.useExistingDatabase.database }}
+        sslmode: {{ .Values.pgwatch.postgres.useExistingDatabase.sslmode | default "disable" }}
       secureJsonData:
         password: "${PGWATCH_METRICS_DS_PASSWORD}"
       version: 1
       editable: true
   {{ end }}
   {{ end }}
-  {{- if include "pgwatch.isTrue" (include "pgwatch.grafana.enableDatasources.prometheus" .) }}
+  {{- if .Values.pgwatch.grafana.enableDatasources.prometheus }}
     - name: PROMETHEUS
       type: prometheus
       access: proxy
@@ -167,7 +167,7 @@ data:
       basicAuthUser:
       basicAuthPassword:
       withCredentials:
-      {{- if not (include "pgwatch.isTrue" (include "pgwatch.grafana.enableDatasources.postgres" .)) }}
+      {{- if not .Values.pgwatch.grafana.enableDatasources.postgres }}
       isDefault: true
       {{- end}}
       version: 1

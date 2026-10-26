@@ -10,7 +10,7 @@ spec:
     - name: pgwatch
       port: {{ .Values.pgwatch.webPort }}
       targetPort: {{ .Values.pgwatch.webPort }}
-{{- if include "pgwatch.isTrue" (include "pgwatch.prometheus.newPrometheus.createPrometheus" .) }}
+{{- if .Values.pgwatch.prometheus.newPrometheus.createPrometheus }}
     - name: pgwatch-prometheus-sink
       port: 9188
       targetPort: 9188
@@ -22,7 +22,7 @@ spec:
   grafana-svc is only needed for the custom Grafana Deployment.
   When useSubchart: true the official Grafana subchart creates its own Service.
 */}}
-{{- if and (include "pgwatch.isTrue" (include "pgwatch.grafana.enableGrafana" .)) (not .Values.pgwatch.grafana.useSubchart) }}
+{{- if and .Values.pgwatch.grafana.enableGrafana (not .Values.pgwatch.grafana.useSubchart) }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -43,7 +43,7 @@ spec:
   postgres-svc is only needed for the built-in PostgreSQL StatefulSet.
   When timescaledb.enabled: true the TimescaleDB subchart creates its own Service.
 */}}
-{{- if and (include "pgwatch.isTrue" (include "pgwatch.postgres.createMetricDatabase" .)) (not .Values.timescaledb.enabled) }}
+{{- if and .Values.pgwatch.postgres.createMetricDatabase (not .Values.timescaledb.enabled) }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -60,7 +60,7 @@ spec:
     {{- include "pgwatch.selectorLabels" (dict "root" . "component" "postgres") | nindent 4 }}
 {{ end }}
 ---
-{{- if include "pgwatch.isTrue" (include "pgwatch.prometheus.newPrometheus.createPrometheus" .) }}
+{{- if .Values.pgwatch.prometheus.newPrometheus.createPrometheus }}
 apiVersion: v1
 kind: Service
 metadata:

@@ -2,7 +2,7 @@
   Skipped when timescaledb.enabled: true — the TimescaleDB subchart provides the
   database in that case and db-init-job.yaml handles schema/user bootstrapping.
 */}}
-{{- if and (include "pgwatch.isTrue" (include "pgwatch.postgres.createMetricDatabase" .)) (not .Values.timescaledb.enabled) }}
+{{- if and .Values.pgwatch.postgres.createMetricDatabase (not .Values.timescaledb.enabled) }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -27,7 +27,7 @@ spec:
         env:
         - name: PGDATA
           value: /pgdata/data
-        image: {{ (include "pgwatch.postgres.newPgDatabase.image" .) }}
+        image: {{ .Values.pgwatch.postgres.newPgDatabase.image }}
         {{- with .Values.pgwatch.postgres.newPgDatabase.initContainers.resources }}
         resources:
           {{- toYaml . | nindent 10 }}
@@ -54,7 +54,7 @@ spec:
       containers:
       - name: postgres
         {{- include "pgwatch.containerSecurityContext" (dict "global" .Values.securityContext "component" .Values.pgwatch.postgres.securityContext) | nindent 8 }}
-        image: {{ (include "pgwatch.postgres.newPgDatabase.image" .) }}
+        image: {{ .Values.pgwatch.postgres.newPgDatabase.image }}
         {{- with .Values.pgwatch.postgres.newPgDatabase.resources }}
         resources:
           {{- toYaml . | nindent 10 }}
@@ -80,8 +80,8 @@ spec:
         {{- include "pgwatch.commonLabels" (dict "root" . "component" "postgres") | nindent 8 }}
     spec:
       accessModes: [ "ReadWriteOnce" ]
-      storageClassName: {{ (include "pgwatch.postgres.newPgDatabase.volume.storageClass" .) }}
+      storageClassName: {{ .Values.pgwatch.postgres.newPgDatabase.volume.storageClass }}
       resources:
         requests:
-          storage: {{ (include "pgwatch.postgres.newPgDatabase.volume.size" .) }}
+          storage: {{ .Values.pgwatch.postgres.newPgDatabase.volume.size }}
 {{ end }}
