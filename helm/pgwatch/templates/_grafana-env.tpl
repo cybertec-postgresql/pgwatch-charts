@@ -35,23 +35,23 @@ pgwatch.grafana.env
   "GF_AUTH_ANONYMOUS_ORG_ROLE"             "Admin"
   "GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH" "/var/lib/grafana/dashboards/postgresql/1-global-db-overview.json"
 -}}
-{{- if include "pgwatch.isTrue" (include "pgwatch.postgres.createMetricDatabase" $root) }}
+{{- if $root.Values.pgwatch.postgres.createMetricDatabase }}
   {{- $_ := set $defaults "GF_DATABASE_TYPE"     "postgres" -}}
   {{- $_ := set $defaults "GF_DATABASE_HOST"     (printf "%s:5432" (include "pgwatch.dbHost" $root)) -}}
   {{- $_ := set $defaults "GF_DATABASE_NAME"     "pgwatch_grafana" -}}
   {{- $_ := set $defaults "GF_DATABASE_SSL_MODE" "disable" -}}
-{{- else if include "pgwatch.postgres.hasUseExistingDatabase" $root }}
+{{- else if $root.Values.pgwatch.postgres.useExistingDatabase }}
   {{- $_ := set $defaults "GF_DATABASE_TYPE"     "postgres" -}}
-  {{- $_ := set $defaults "GF_DATABASE_HOST"     (include "pgwatch.postgres.useExistingDatabase.endpoint" $root) -}}
-  {{- $_ := set $defaults "GF_DATABASE_NAME"     (include "pgwatch.postgres.useExistingDatabase.grafanaDatabase" $root) -}}
-  {{- $_ := set $defaults "GF_DATABASE_SSL_MODE" (include "pgwatch.postgres.useExistingDatabase.sslmode" $root) -}}
+  {{- $_ := set $defaults "GF_DATABASE_HOST"     $root.Values.pgwatch.postgres.useExistingDatabase.endpoint -}}
+  {{- $_ := set $defaults "GF_DATABASE_NAME"     ($root.Values.pgwatch.postgres.useExistingDatabase.grafanaDatabase | default "pgwatch_grafana") -}}
+  {{- $_ := set $defaults "GF_DATABASE_SSL_MODE" $root.Values.pgwatch.postgres.useExistingDatabase.sslmode -}}
 {{- end }}
 {{- $merged := merge (deepCopy $userEnv) $defaults -}}
 {{- range $key, $value := $merged }}
 - name: {{ $key }}
   value: {{ $value | quote }}
 {{- end }}
-{{- if or (include "pgwatch.isTrue" (include "pgwatch.postgres.createMetricDatabase" $root)) (include "pgwatch.postgres.hasUseExistingDatabase" $root) }}
+{{- if or $root.Values.pgwatch.postgres.createMetricDatabase $root.Values.pgwatch.postgres.useExistingDatabase }}
 - name: GF_DATABASE_USER
   valueFrom:
     secretKeyRef:

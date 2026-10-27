@@ -3,7 +3,7 @@
   When useSubchart: true the official Grafana subchart sidecar discovers
   dashboards via the grafana_dashboard ConfigMap label — no provider file needed.
 */}}
-{{- if and (include "pgwatch.isTrue" (include "pgwatch.grafana.enableGrafana" .)) (not .Values.pgwatch.grafana.useSubchart) }}
+{{- if and .Values.pgwatch.grafana.enableGrafana (not .Values.pgwatch.grafana.useSubchart) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -14,7 +14,7 @@ data:
   dashboards_provider.yml: |
     apiVersion: 1
     providers:
-    {{- if include "pgwatch.isTrue" (include "pgwatch.postgres.enablePgSink" .) }}
+    {{- if .Values.pgwatch.postgres.enablePgSink }}
     - name: 'pgwatch-postgres'
       orgId: 1
       folder: 'PostgreSQL'
@@ -22,7 +22,7 @@ data:
       options:
         path: /var/lib/grafana/dashboards/postgresql
     {{- end }}
-    {{- if include "pgwatch.isTrue" (include "pgwatch.prometheus.enablePromSink" .) }}
+    {{- if .Values.pgwatch.prometheus.enablePromSink }}
     - name: 'pgwatch-prometheus'
       orgId: 1
       folder: 'Prometheus'

@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "pgwatch chart values",
+  "description": "Minimal schema: rejects value formats removed after chart 4.x. See the README's Migration Reference for the old -> new mappings.",
+  "type": "object",
+  "properties": {
+    "pgwatch": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": "object",
+          "description": "Use pgwatch.image.repository / pgwatch.image.tag instead of a plain string."
+        },
+        "postgres": {
+          "type": "object",
+          "properties": {
+            "enablePgSink": { "type": "boolean" },
+            "createMetricDatabase": { "type": "boolean" },
+            "settings": {
+              "type": "object",
+              "properties": {
+                "retention_days": false
+              }
+            },
+            "useExistingDatabase": {
+              "type": "object",
+              "properties": {
+                "grafana_database": false,
+                "username": false,
+                "password": false
+              }
+            },
+            "enable_pg_sink": false,
+            "create_metric_database": false,
+            "new_pg_database": false,
+            "use_existing_database": false
+          }
+        },
+        "prometheus": {
+          "type": "object",
+          "properties": {
+            "enablePromSink": { "type": "boolean" },
+            "newPrometheus": {
+              "type": "object",
+              "properties": {
+                "createPrometheus": { "type": "boolean" },
+                "settings": {
+                  "type": "object",
+                  "properties": {
+                    "retention_days": false
+                  }
+                },
+                "create_prometheus": false
+              }
+            },
+            "enable_prom_sink": false,
+            "new_prometheus": false
+          }
+        },
+        "grafana": {
+          "type": "object",
+          "properties": {
+            "enableGrafana": { "type": "boolean" },
+            "enableDatasources": {
+              "type": "object",
+              "properties": {
+                "postgres": { "type": "boolean" },
+                "prometheus": { "type": "boolean" }
+              }
+            },
+            "enable_grafana": false,
+            "enable_datasources": false
+          }
+        }
+      }
+    }
+  }
+}

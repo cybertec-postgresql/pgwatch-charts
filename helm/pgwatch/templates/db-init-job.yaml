@@ -21,7 +21,7 @@
     - OR Secret pgwatch-postgresql-secret-pgwatch  keys username / password (default)
 ==============================================================================
 */}}
-{{- if or .Values.timescaledb.enabled (include "pgwatch.isTrue" (include "pgwatch.postgres.createMetricDatabase" .)) }}
+{{- if or .Values.timescaledb.enabled .Values.pgwatch.postgres.createMetricDatabase }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -45,7 +45,7 @@ spec:
       containers:
         - name: db-init
           {{- include "pgwatch.containerSecurityContext" (dict "global" .Values.securityContext "component" .Values.pgwatch.postgres.securityContext) | nindent 10 }}
-          image: {{ (include "pgwatch.postgres.newPgDatabase.image" .) }}
+          image: {{ .Values.pgwatch.postgres.newPgDatabase.image }}
           {{- with .Values.pgwatch.postgres.newPgDatabase.dbInitJob.resources }}
           resources:
             {{- toYaml . | nindent 12 }}

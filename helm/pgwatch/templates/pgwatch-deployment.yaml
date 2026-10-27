@@ -23,11 +23,7 @@ spec:
           envFrom:
             {{- toYaml . | nindent 12 }}
         {{- end }}
-        {{- if kindIs "string" .Values.pgwatch.image }}
-          image: {{ .Values.pgwatch.image }}
-        {{- else }}
           image: {{ .Values.pgwatch.image.repository }}:{{ .Values.pgwatch.image.tag | default .Chart.AppVersion }}
-        {{- end }}
         {{- with .Values.pgwatch.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
@@ -44,7 +40,7 @@ spec:
           ports:
             - containerPort: {{ .Values.pgwatch.webPort }}
               protocol: TCP
-        {{- if include "pgwatch.isTrue" (include "pgwatch.prometheus.enablePromSink" .) }}
+        {{- if .Values.pgwatch.prometheus.enablePromSink }}
             - containerPort: 9188
               protocol: TCP
         {{ end }}

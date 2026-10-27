@@ -1,84 +1,11 @@
-{{- if include "pgwatch.hasLegacyBoolValues" . }}
-WARNING:
-Detected legacy string boolean values ("true"/"false") in pgwatch chart values.
-
-This compatibility behavior is deprecated and will be removed in the next chart
-version. Please update your values files and overrides to use native YAML
-booleans instead:
-
-  true
-  false
-
-Affected settings are listed below using their current camelCase names. If your
-values file still uses snake_case keys, see the separate snake_case migration
-warning below for the old -> new key mapping.
-
-Affected boolean settings include:
-  - pgwatch.postgres.enablePgSink
-  - pgwatch.postgres.createMetricDatabase
-  - pgwatch.prometheus.enablePromSink
-  - pgwatch.prometheus.newPrometheus.createPrometheus
-  - pgwatch.grafana.enableGrafana
-  - pgwatch.grafana.enableDatasources.postgres
-  - pgwatch.grafana.enableDatasources.prometheus
-{{- end }}
-
-{{- if include "pgwatch.hasLegacyRenamedValues" . }}
-WARNING:
-Detected legacy snake_case values in pgwatch chart values.
-
-These keys were renamed to camelCase to follow Helm naming conventions. The
-snake_case keys still work for backward compatibility, but support will be
-removed in the next major chart version. Please migrate your values:
-
-  pgwatch.postgres.enable_pg_sink -> pgwatch.postgres.enablePgSink
-  pgwatch.postgres.settings.retention_days -> pgwatch.postgres.settings.retentionDays
-  pgwatch.postgres.create_metric_database -> pgwatch.postgres.createMetricDatabase
-  pgwatch.postgres.new_pg_database -> pgwatch.postgres.newPgDatabase
-  pgwatch.postgres.use_existing_database -> pgwatch.postgres.useExistingDatabase
-  pgwatch.postgres.use_existing_database.grafana_database -> pgwatch.postgres.useExistingDatabase.grafanaDatabase
-  pgwatch.prometheus.enable_prom_sink -> pgwatch.prometheus.enablePromSink
-  pgwatch.prometheus.new_prometheus -> pgwatch.prometheus.newPrometheus
-  pgwatch.prometheus.new_prometheus.create_prometheus -> pgwatch.prometheus.newPrometheus.createPrometheus
-  pgwatch.prometheus.new_prometheus.settings.retention_days -> pgwatch.prometheus.newPrometheus.settings.retentionDays
-  pgwatch.grafana.enable_grafana -> pgwatch.grafana.enableGrafana
-  pgwatch.grafana.enable_datasources -> pgwatch.grafana.enableDatasources
-{{- end }}
-
-{{- if include "pgwatch.hasLegacyExternalDbInlineCredentials" . }}
-WARNING:
-Detected deprecated inline external database credentials under:
-
-  pgwatch.postgres.useExistingDatabase.username
-  pgwatch.postgres.useExistingDatabase.password
-
-Please migrate to one of the new secret-backed options:
-  - pgwatch.postgres.credentials.username / password
-  - pgwatch.postgres.credentials.existingSecret
-{{- end }}
-
-{{- if kindIs "string" .Values.pgwatch.image }}
-WARNING:
-Detected legacy string value for pgwatch.image.
-
-Support for the plain string format is deprecated and will be removed in a future
-major release. Please migrate to the new structured format:
-
-  pgwatch:
-    image:
-      repository: "docker.io/cybertecpostgresql/pgwatch"
-      tag: ""  # empty defaults to .Chart.AppVersion
-
-{{- end }}
-
-{{- if or (include "pgwatch.isTrue" (include "pgwatch.postgres.createMetricDatabase" .))
-          (include "pgwatch.postgres.hasUseExistingDatabase" .) }}
+{{- if or .Values.pgwatch.postgres.createMetricDatabase
+          .Values.pgwatch.postgres.useExistingDatabase }}
 
 Credential Secret:
   kubectl get secret {{ include "pgwatch.credentialSecretName" . }} -n {{ .Release.Namespace }} -o yaml
 {{- end }}
 
-{{- if and (include "pgwatch.isTrue" (include "pgwatch.postgres.createMetricDatabase" .))
+{{- if and .Values.pgwatch.postgres.createMetricDatabase
           (not .Values.timescaledb.enabled) }}
 Postgres Admin Secret:
   kubectl get secret {{ include "pgwatch.adminCredentialSecretName" . }} -n {{ .Release.Namespace }} -o yaml

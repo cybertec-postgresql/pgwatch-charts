@@ -1,0 +1,181 @@
+suite: removed-value-formats
+# Value formats deprecated in 4.x and removed in the next major version must fail the
+# values.schema.json validation instead of being silently ignored.
+templates:
+  - templates/pgwatch-deployment.yaml
+set:
+  pgwatch.postgres.credentials.password: pgwatchtest
+  pgwatch.postgres.adminCredentials.password: pgwatchadmin
+tests:
+  - it: renders with the default values
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  # String booleans
+
+  - it: rejects a string boolean for pgwatch.postgres.enablePgSink
+    set:
+      pgwatch.postgres.enablePgSink: "false"
+    asserts:
+      - failedTemplate:
+          errorPattern: "/pgwatch/postgres/enablePgSink': got string, want boolean"
+
+  - it: rejects a string boolean for pgwatch.postgres.createMetricDatabase
+    set:
+      pgwatch.postgres.createMetricDatabase: "true"
+    asserts:
+      - failedTemplate:
+          errorPattern: "/pgwatch/postgres/createMetricDatabase': got string, want boolean"
+
+  - it: rejects a string boolean for pgwatch.prometheus.enablePromSink
+    set:
+      pgwatch.prometheus.enablePromSink: "false"
+    asserts:
+      - failedTemplate:
+          errorPattern: "/pgwatch/prometheus/enablePromSink': got string, want boolean"
+
+  - it: rejects a string boolean for pgwatch.prometheus.newPrometheus.createPrometheus
+    set:
+      pgwatch.prometheus.newPrometheus.createPrometheus: "false"
+    asserts:
+      - failedTemplate:
+          errorPattern: "/pgwatch/prometheus/newPrometheus/createPrometheus': got string, want boolean"
+
+  - it: rejects a string boolean for pgwatch.grafana.enableGrafana
+    set:
+      pgwatch.grafana.enableGrafana: "false"
+    asserts:
+      - failedTemplate:
+          errorPattern: "/pgwatch/grafana/enableGrafana': got string, want boolean"
+
+  - it: rejects a string boolean for pgwatch.grafana.enableDatasources.postgres
+    set:
+      pgwatch.grafana.enableDatasources.postgres: "false"
+    asserts:
+      - failedTemplate:
+          errorPattern: "/pgwatch/grafana/enableDatasources/postgres': got string, want boolean"
+
+  - it: rejects a string boolean for pgwatch.grafana.enableDatasources.prometheus
+    set:
+      pgwatch.grafana.enableDatasources.prometheus: "false"
+    asserts:
+      - failedTemplate:
+          errorPattern: "/pgwatch/grafana/enableDatasources/prometheus': got string, want boolean"
+
+  # snake_case keys
+
+  - it: rejects pgwatch.postgres.enable_pg_sink
+    set:
+      pgwatch.postgres.enable_pg_sink: true
+    asserts:
+      - failedTemplate:
+          errorPattern: "/pgwatch/postgres/enable_pg_sink': false schema"
+
+  - it: rejects pgwatch.postgres.settings.retention_days
+    set:
+      pgwatch.postgres.settings.retention_days: 7
+    asserts:
+      - failedTemplate:
+          errorPattern: "/pgwatch/postgres/settings/retention_days': false schema"
+
+  - it: rejects pgwatch.postgres.create_metric_database
+    set:
+      pgwatch.postgres.create_metric_database: true
+    asserts:
+      - failedTemplate:
+          errorPattern: "/pgwatch/postgres/create_metric_database': false schema"
+
+  - it: rejects pgwatch.postgres.new_pg_database
+    set:
+      pgwatch.postgres.new_pg_database.image: docker.io/postgres:18.3-alpine3.23
+    asserts:
+      - failedTemplate:
+          errorPattern: "/pgwatch/postgres/new_pg_database': false schema"
+
+  - it: rejects pgwatch.postgres.use_existing_database
+    set:
+      pgwatch.postgres.use_existing_database.endpoint: postgresql.local
+    asserts:
+      - failedTemplate:
+          errorPattern: "/pgwatch/postgres/use_existing_database': false schema"
+
+  - it: rejects pgwatch.postgres.useExistingDatabase.grafana_database
+    set:
+      pgwatch.postgres.createMetricDatabase: false
+      pgwatch.postgres.useExistingDatabase.endpoint: postgresql.local
+      pgwatch.postgres.useExistingDatabase.grafana_database: pgwatch_grafana
+    asserts:
+      - failedTemplate:
+          errorPattern: "/pgwatch/postgres/useExistingDatabase/grafana_database': false schema"
+
+  - it: rejects pgwatch.prometheus.enable_prom_sink
+    set:
+      pgwatch.prometheus.enable_prom_sink: true
+    asserts:
+      - failedTemplate:
+          errorPattern: "/pgwatch/prometheus/enable_prom_sink': false schema"
+
+  - it: rejects pgwatch.prometheus.new_prometheus
+    set:
+      pgwatch.prometheus.new_prometheus.create_prometheus: true
+    asserts:
+      - failedTemplate:
+          errorPattern: "/pgwatch/prometheus/new_prometheus': false schema"
+
+  - it: rejects pgwatch.prometheus.newPrometheus.create_prometheus
+    set:
+      pgwatch.prometheus.newPrometheus.create_prometheus: true
+    asserts:
+      - failedTemplate:
+          errorPattern: "/pgwatch/prometheus/newPrometheus/create_prometheus': false schema"
+
+  - it: rejects pgwatch.prometheus.newPrometheus.settings.retention_days
+    set:
+      pgwatch.prometheus.newPrometheus.settings.retention_days: 7
+    asserts:
+      - failedTemplate:
+          errorPattern: "/pgwatch/prometheus/newPrometheus/settings/retention_days': false schema"
+
+  - it: rejects pgwatch.grafana.enable_grafana
+    set:
+      pgwatch.grafana.enable_grafana: true
+    asserts:
+      - failedTemplate:
+          errorPattern: "/pgwatch/grafana/enable_grafana': false schema"
+
+  - it: rejects pgwatch.grafana.enable_datasources
+    set:
+      pgwatch.grafana.enable_datasources.postgres: true
+    asserts:
+      - failedTemplate:
+          errorPattern: "/pgwatch/grafana/enable_datasources': false schema"
+
+  # Inline external database credentials
+
+  - it: rejects pgwatch.postgres.useExistingDatabase.username
+    set:
+      pgwatch.postgres.createMetricDatabase: false
+      pgwatch.postgres.useExistingDatabase.endpoint: postgresql.local
+      pgwatch.postgres.useExistingDatabase.username: pgwatch_user
+    asserts:
+      - failedTemplate:
+          errorPattern: "/pgwatch/postgres/useExistingDatabase/username': false schema"
+
+  - it: rejects pgwatch.postgres.useExistingDatabase.password
+    set:
+      pgwatch.postgres.createMetricDatabase: false
+      pgwatch.postgres.useExistingDatabase.endpoint: postgresql.local
+      pgwatch.postgres.useExistingDatabase.password: change-me
+    asserts:
+      - failedTemplate:
+          errorPattern: "/pgwatch/postgres/useExistingDatabase/password': false schema"
+
+  # Plain string pgwatch.image
+
+  - it: rejects a plain string pgwatch.image
+    set:
+      pgwatch.image: docker.io/cybertecpostgresql/pgwatch:5.2
+    asserts:
+      - failedTemplate:
+          errorPattern: "/pgwatch/image': got string, want object"

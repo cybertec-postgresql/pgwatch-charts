@@ -57,9 +57,6 @@ helm unittest helm/pgwatch -f 'tests/grafana-disabled_test.yaml'
 Another option is to run the tests suites with regex
 
 ```sh
-# All legacy-compat suites
-helm unittest helm/pgwatch -f 'tests/legacy*_test.yaml'
-
 # All env-merge suites
 helm unittest helm/pgwatch -f 'tests/env-merge-*_test.yaml'
 ```

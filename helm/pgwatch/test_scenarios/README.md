@@ -66,15 +66,6 @@ Not meant to be deployed; use `helm template` or `helm install --dry-run`.
 | [`env-merge-reserved-key.yaml`](template-checks/env-merge-reserved-key.yaml) | Reserved env key causes the render to fail |
 | [`env-merge-envfrom-precedence.yaml`](template-checks/env-merge-envfrom-precedence.yaml) | Explicit `env` wins over `envFrom` on a running pod |
 
-### Legacy compatibility
-
-| File | What it checks |
-| --- | --- |
-| [`legacy-bool-values.yaml`](template-checks/legacy-bool-values.yaml) | String-boolean fallback (`"true"`/`"false"`) |
-| [`legacy-snakecase-values.yaml`](template-checks/legacy-snakecase-values.yaml) | `snake_case` key fallback |
-| [`legacy-inline-db-credentials-values.yaml`](template-checks/legacy-inline-db-credentials-values.yaml) | Deprecated inline DB credentials fallback |
-| [`legacy-image-string-values.yaml`](template-checks/legacy-image-string-values.yaml) | Deprecated plain-string `pgwatch.image` fallback |
-
 ### Feature checks
 
 | File | What it checks |

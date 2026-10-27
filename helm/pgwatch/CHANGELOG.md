@@ -2,9 +2,26 @@
 
 ## [Unreleased]
 
+### Breaking changes
+
+- Value formats deprecated in 4.0.0 / 4.1.0 are no longer supported and are now rejected by a new `values.schema.json` at install/upgrade time ([#58](https://github.com/cybertec-postgresql/pgwatch-charts/issues/58)). See the README's "Upgrading" and "Migration Reference" sections.
+
+### Added
+
+- `values.schema.json` that rejects the removed value formats listed below ([#58](https://github.com/cybertec-postgresql/pgwatch-charts/issues/58)).
+
 ### Changed
 
 - Upgraded TimescaleDB subchart dependency from `0.12.1` to `0.12.2`.
+- Templates reference `.Values.*` directly instead of going through backward-compatibility wrapper helpers ([#58](https://github.com/cybertec-postgresql/pgwatch-charts/issues/58)).
+
+### Removed
+
+- String booleans (`"true"` / `"false"`); use native YAML booleans ([#13](https://github.com/cybertec-postgresql/pgwatch-charts/issues/13)).
+- snake_case value keys (`enable_pg_sink`, `use_existing_database`, ...); use the camelCase keys ([#22](https://github.com/cybertec-postgresql/pgwatch-charts/issues/22)).
+- Inline `pgwatch.postgres.useExistingDatabase.username` / `password`; use `pgwatch.postgres.credentials.*` or `credentials.existingSecret` ([#12](https://github.com/cybertec-postgresql/pgwatch-charts/issues/12)).
+- Plain string `pgwatch.image`; use `pgwatch.image.repository` / `pgwatch.image.tag` ([#39](https://github.com/cybertec-postgresql/pgwatch-charts/issues/39)).
+- Deprecation warnings for the formats above from `NOTES.txt`.
 
 ## [4.1.0] – 2026-06-18
 
