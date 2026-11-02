@@ -55,7 +55,7 @@ pgwatch:
   # If unset, pgwatch auto-generates a PostgreSQL URI from the metrics database settings (default).
   # Set 'files' to use file-based source configuration instead.
   # Source files are mounted under /tmp/pgwatch-sources and pgwatch reads the directory.
-  # This supports multiple source files; pgwatch v5 images including the fix for
+  # This supports multiple source files; pgwatch images since 5.x including the fix for
   # https://github.com/cybertec-postgresql/pgwatch/issues/1368 skip Kubernetes
   # ConfigMap atomic-writer internals while walking the directory.
   # See configs/sample-sources.yaml for the file format.

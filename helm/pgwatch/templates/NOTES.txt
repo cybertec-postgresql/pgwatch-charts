@@ -10,3 +10,12 @@ Credential Secret:
 Postgres Admin Secret:
   kubectl get secret {{ include "pgwatch.adminCredentialSecretName" . }} -n {{ .Release.Namespace }} -o yaml
 {{- end }}
+
+{{- if .Release.IsUpgrade }}
+
+WARNING: Upgrading from chart 4.x (pgwatch 5.x)?
+  pgwatch 6.1 does not start until its database schema is upgraded with
+  `pgwatch config upgrade`, and the existing metric definitions are not
+  updated. Back up your databases and follow the "Upgrade to Chart 5.x"
+  section in the chart's README.md.
+{{- end }}

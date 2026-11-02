@@ -1,0 +1,20 @@
+suite: notes-upgrade-warning
+templates:
+  - templates/NOTES.txt
+set:
+  pgwatch.postgres.credentials.password: pgwatchtest
+  pgwatch.postgres.adminCredentials.password: pgwatchadmin
+tests:
+  - it: shows the pgwatch 6 upgrade warning on helm upgrade
+    release:
+      upgrade: true
+    asserts:
+      - matchRegexRaw:
+          pattern: "pgwatch config upgrade"
+      - matchRegexRaw:
+          pattern: "Upgrade to Chart 5.x"
+
+  - it: does not show the upgrade warning on helm install
+    asserts:
+      - notMatchRegexRaw:
+          pattern: "pgwatch config upgrade"
