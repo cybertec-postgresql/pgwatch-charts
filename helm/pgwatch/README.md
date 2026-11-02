@@ -492,6 +492,114 @@ oldest first.
 
 ### Upgrade to Chart 5.x
 
+Chart 5.0.0 upgrades pgwatch from 5.2 to 6.1 and removes the value formats
+deprecated in chart 4.x. Read both parts below before upgrading.
+
+#### pgwatch 6.1: database schema upgrade
+
+pgwatch 6 changes the schema of the configuration database and of the
+PostgreSQL / TimescaleDB metrics database. pgwatch 6.1 refuses to start until
+these changes are applied with `pgwatch config upgrade`. Neither the chart nor
+the `db-init` Job runs this command, so after `helm upgrade` the new pgwatch
+pod crash-loops with:
+
+```text
+config database schema is outdated, please run migrations using `pgwatch config upgrade` command
+```
+
+This affects every installation with the default `pgwatch.sources` (sources
+read from the database) or with `pgwatch.postgres.enablePgSink: true`. With the
+default `RollingUpdate` strategy, the old pgwatch 5.2 pod keeps running and
+collecting metrics until the new pod becomes ready.
+
+**1. Back up the databases.** The migration changes data in place. On a
+PostgreSQL sink, every metric table is recreated with native partitioning and
+its rows are copied over. Take a `pg_dump` of the configuration and metrics
+databases before running `helm upgrade`. With the chart defaults, both live in
+the `pgwatch_metrics` database.
+
+**2. Run `helm upgrade`** as usual.
+
+**3. Apply the schema upgrade.** A crash-looping pod can't be used with
+`kubectl exec`, so the following runs `pgwatch config upgrade` in a copy of the
+new pod. The copy has the same image, environment and credentials, and no
+labels, so the ReplicaSet doesn't adopt it and the Service doesn't route to it.
+
+```sh
+NS=pgwatch
+POD=$(kubectl get pods -n "$NS" -l app.kubernetes.io/component=pgwatch \
+  --sort-by=.metadata.creationTimestamp -o name | tail -n 1)
+
+kubectl debug -n "$NS" "$POD" --profile=general --copy-to=pgwatch-upgrade --container=pgwatch -- sh -c '
+  case "$PW_SOURCES" in postgres*) ;; *) unset PW_SOURCES ;; esac
+  if [ "$PG_IS_SINK" = "true" ]; then
+    SINK="--sink=postgresql://$PGWATCH_USER:$PGWATCH_USER_PASSWORD@$METRIC_DATABASE_ENDPOINT:$METRIC_DATABASE_PORT/$METRIC_DATABASE_DATABASE?sslmode=$METRIC_DATABASE_SSLMODE"
+  fi
+  /pgwatch/pgwatch $SINK config upgrade
+  echo "config upgrade exit code: $?"
+  sleep infinity'
+
+kubectl wait -n "$NS" pod/pgwatch-upgrade --for=condition=Ready --timeout=120s
+kubectl logs -n "$NS" pgwatch-upgrade -f
+```
+
+Wait for `config upgrade exit code: 0`, then stop following the logs and
+remove the copy:
+
+```sh
+kubectl delete pod -n "$NS" pgwatch-upgrade
+```
+
+The pgwatch Deployment's pod starts on its next restart. The `sleep infinity`
+keeps the copy from being restarted, which would hide the first run's output.
+
+> **Note:** If you set `pgwatch.image.tag` explicitly, use `6.1` or later. With
+> a TimescaleDB sink, the pgwatch 6.0.x migration converts the hypertables and
+> drops their data
+> ([cybertec-postgresql/pgwatch#1614](https://github.com/cybertec-postgresql/pgwatch/issues/1614)).
+
+#### pgwatch 6.1: metric definitions are not updated
+
+With the default `pgwatch.sources`, pgwatch reads its metric and preset
+definitions from the configuration database. pgwatch writes its built-in
+definitions there only when it creates the `pgwatch` schema for the first time,
+so an upgraded installation keeps the pgwatch 5.2 definitions:
+
+- The metrics added in pgwatch 6 (`autovacuum_scores`, `recovery`,
+  `settings_num`, `stat_lock`) aren't collected. For example, the new
+  `Settings Overview` dashboard stays empty without `settings_num`.
+- The new presets (`patroni`, `postgres-exporter-basic`) don't exist, and the
+  existing presets keep their 5.2 metric lists.
+- The 5.2 SQL of the metrics changed in pgwatch 6 is kept.
+
+Re-running `pgwatch config init`, as suggested in the upstream upgrade guide,
+doesn't change an existing configuration database in pgwatch 6.1. To use the
+new metrics, add them in the pgwatch web UI (**Metrics** and **Presets** pages).
+The built-in definitions can be printed with the pgwatch image, for example:
+
+```sh
+kubectl run pgwatch-metrics -n pgwatch --rm -i --restart=Never \
+  --image=cybertecpostgresql/pgwatch:6.1 --command -- /pgwatch/pgwatch metric list settings_num
+```
+
+Fresh installations and installations with file-based sources
+(`pgwatch.sources.files`) use the 6.1 definitions.
+
+#### pgwatch 6.1: daily partitions on PostgreSQL sinks
+
+The default of pgwatch's `--partition-interval` changed from `1 week` to
+`1 day`, so a PostgreSQL sink creates daily partitions after the upgrade.
+Existing partitions are kept. TimescaleDB sinks aren't affected. To keep weekly
+partitions:
+
+```yaml
+pgwatch:
+  env:
+    PW_PARTITION_INTERVAL: "1 week"
+```
+
+#### Removed value formats
+
 Chart 5.0.0 removes the value formats deprecated in chart 4.x:
 
 - String booleans (`"true"` / `"false"`)

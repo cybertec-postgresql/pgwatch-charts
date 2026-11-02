@@ -4,14 +4,18 @@
 
 ### Breaking changes
 
+- Upgraded pgwatch (`appVersion`) from `5.2` to `6.1` ([#59](https://github.com/cybertec-postgresql/pgwatch-charts/issues/59)). Existing installations must run `pgwatch config upgrade` after `helm upgrade`, otherwise pgwatch doesn't start. Existing metric definitions in the configuration database are not updated, and PostgreSQL sinks switch from weekly to daily partitions. See the README's "Upgrade to Chart 5.x" section.
 - Value formats deprecated in 4.0.0 / 4.1.0 are no longer supported and are now rejected by a new `values.schema.json` at install/upgrade time ([#58](https://github.com/cybertec-postgresql/pgwatch-charts/issues/58)). See the README's "Upgrading" and "Migration Reference" sections.
 
 ### Added
 
+- Grafana dashboards `Patroni Cluster Overview` and `Settings Overview` for the PostgreSQL and Prometheus sinks ([#59](https://github.com/cybertec-postgresql/pgwatch-charts/issues/59)).
+- Upgrade warning in `NOTES.txt` on `helm upgrade` ([#59](https://github.com/cybertec-postgresql/pgwatch-charts/issues/59)).
 - `values.schema.json` that rejects the removed value formats listed below ([#58](https://github.com/cybertec-postgresql/pgwatch-charts/issues/58)).
 
 ### Changed
 
+- Updated all PostgreSQL and Prometheus dashboard JSON files from the upstream pgwatch repository ([`fd3af2484e`](https://github.com/cybertec-postgresql/pgwatch/tree/fd3af2484e/grafana)) ([#59](https://github.com/cybertec-postgresql/pgwatch-charts/issues/59)).
 - Upgraded TimescaleDB subchart dependency from `0.12.1` to `0.12.2`.
 - Templates reference `.Values.*` directly instead of going through backward-compatibility wrapper helpers ([#58](https://github.com/cybertec-postgresql/pgwatch-charts/issues/58)).
 
